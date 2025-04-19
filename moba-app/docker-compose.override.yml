@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  moba-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: moba_app_dev
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:${MOBA_SERVICE_PORT:-3000}
+    develop:
+      watch:
+        # Sync source code changes
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        # Restart service if critical files change
+        - action: sync+restart
+          path: .env
+          target: /app/.env 

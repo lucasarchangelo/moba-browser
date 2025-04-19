@@ -1,0 +1,6 @@
+export enum ItemSlotType {
+  WEAPON = 'WEAPON',
+  ARMOR = 'ARMOR',
+  ACCESSORY = 'ACCESSORY',
+  CONSUMABLE = 'CONSUMABLE',
+} 

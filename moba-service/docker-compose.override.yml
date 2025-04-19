@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  moba-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: moba_service_dev
+    command: pnpm run start:dev
+    environment:
+      - NODE_ENV=development
+    develop:
+      watch:
+        # Sync source code changes
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+        # Restart service if critical files change
+        - action: sync+restart
+          path: .env
+          target: /app/.env 

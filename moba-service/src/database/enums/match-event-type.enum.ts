@@ -1,0 +1,8 @@
+export enum MatchEventType {
+  KILL = 'KILL',
+  DEATH = 'DEATH',
+  ITEM_PURCHASE = 'ITEM_PURCHASE',
+  SKILL_USE = 'SKILL_USE',
+  LEVEL_UP = 'LEVEL_UP',
+  GOLD_EARNED = 'GOLD_EARNED',
+} 

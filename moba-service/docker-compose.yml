@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  moba-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moba_service
+    ports:
+      - "${MOBA_SERVICE_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=${POSTGRES_PORT:-5432}
+      - DATABASE_USER=${POSTGRES_USER:-postgres}
+      - DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - DATABASE_NAME=${POSTGRES_DB:-moba}
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
+    # labels:
+    #   - "prometheus.enable=true"
+    #   - "prometheus.port=3000"
+    #   - "prometheus.path=/metrics"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - moba-service-network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_moba_service
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-moba}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-moba}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - moba-service-network
+
+  # prometheus_moba_service:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus_moba_service
+  #   ports:
+  #     - "${PROMETHEUS_PORT:-9090}:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #     - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+  #     - '--web.console.templates=/usr/share/prometheus/consoles'
+  #   restart: unless-stopped
+  #   networks:
+  #     - moba-service-network
+
+  # grafana_moba_service:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana_moba_service
+  #   ports:
+  #     - "${GRAFANA_PORT:-3002}:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+  #     - GF_AUTH_ANONYMOUS_ENABLED=false
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus_moba_service
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       tag: "{{.Name}}"
+  #   networks:
+  #     - moba-service-network
+
+  # node-exporter_moba_service:
+  #   image: prom/node-exporter:latest
+  #   container_name: node-exporter_moba_service
+  #   ports:
+  #     - "${NODE_EXPORTER_PORT:-9100}:9100"
+  #   volumes:
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #     - /:/rootfs:ro
+  #   command:
+  #     - '--path.procfs=/host/proc'
+  #     - '--path.sysfs=/host/sys'
+  #     - '--path.rootfs=/rootfs'
+  #     - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+  #   restart: unless-stopped
+  #   networks:
+  #     - moba-service-network
+
+volumes:
+  postgres_data:
+  # grafana_data:
+  # prometheus_data:
+
+networks:
+  moba-service-network:
+    driver: bridge 
