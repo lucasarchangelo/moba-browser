@@ -1,62 +1,88 @@
 import { Injectable } from '@nestjs/common';
-import * as winston from 'winston';
+import { createLogger, format, transports } from 'winston';
 import { AbstractLoggerService } from './abstract-logger.service';
-import { ILoggerOptions } from './logger.interface';
+import { ILoggerOptions, ILoggerMetadata } from './logger.interface';
+import LokiTransport from 'winston-loki';
 
 @Injectable()
 export class WinstonLoggerService extends AbstractLoggerService {
-  private logger: winston.Logger;
+  private static instance: WinstonLoggerService;
+  private logger;
+  protected context: string = 'Application';
+  protected correlationId?: string;
 
   constructor() {
     super();
-    this.logger = winston.createLogger({
-      level: process.env.LOG_LEVEL || 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json(),
+    
+    // Ensure singleton pattern
+    if (WinstonLoggerService.instance) {
+      return WinstonLoggerService.instance;
+    }
+    
+    WinstonLoggerService.instance = this;
+    
+    this.logger = createLogger({
+      level: 'debug',
+      format: format.combine(
+        format.timestamp(),
+        format.json()
       ),
       transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple(),
-          ),
+        new transports.Console(),
+        new LokiTransport({
+          host: 'http://loki:3100',
+          json: true,
+          labels: { job: 'moba-service' },
+          format: format.json(),
+          replaceTimestamp: true,
+          onConnectionError: (err) => console.error('Loki connection error:', err),
+          batching: true,
+          interval: 5,
         }),
       ],
     });
   }
 
-  debug(message: string, context?: string): void {
-    this.logger.debug(this.formatMessage(message, context));
+  debug(message: string, metadata?: ILoggerMetadata): void {
+    this.logger.debug(this.formatMessage(message, metadata));
   }
 
-  log(message: string, context?: string): void {
-    this.logger.info(this.formatMessage(message, context));
+  log(message: string, metadata?: ILoggerMetadata): void {
+    this.logger.info(this.formatMessage(message, metadata));
   }
 
-  info(message: string, context?: string): void {
-    this.logger.info(this.formatMessage(message, context));
+  info(message: string, metadata?: ILoggerMetadata): void {
+    this.logger.info(this.formatMessage(message, metadata));
   }
 
-  warn(message: string, context?: string): void {
-    this.logger.warn(this.formatMessage(message, context));
+  warn(message: string, metadata?: ILoggerMetadata): void {
+    this.logger.warn(this.formatMessage(message, metadata));
   }
 
-  error(message: string, trace?: string, context?: string): void {
-    this.logger.error(this.formatMessage(message, context), { trace });
+  error(message: string, trace?: string, metadata?: ILoggerMetadata): void {
+    this.logger.error(this.formatMessage(message, metadata), { trace });
   }
 
-  fatal(message: string, trace?: string, context?: string): void {
-    this.logger.error(this.formatMessage(message, context), { trace });
+  fatal(message: string, trace?: string, metadata?: ILoggerMetadata): void {
+    this.logger.error(this.formatMessage(message, metadata), { trace });
   }
 
-  emergency(message: string, trace?: string, context?: string): void {
-    this.logger.error(this.formatMessage(message, context), { trace });
+  emergency(message: string, trace?: string, metadata?: ILoggerMetadata): void {
+    this.logger.error(this.formatMessage(message, metadata), { trace });
   }
 
   startProfile(id: string): void {
-    // Winston doesn't have a direct equivalent to startProfile
-    // You might want to implement this using winston's profiling capabilities
     this.logger.info(`Profile started: ${id}`);
+  }
+
+  getCorrelationId(): string {
+    return this.correlationId || 'no-correlation-id';
+  }
+
+  protected formatMessage(message: string, metadata?: ILoggerMetadata): string {
+    const timestamp = new Date().toISOString();
+    const service = metadata?.service || this.context || 'Application';
+    const correlation = this.correlationId ? `[${this.correlationId}]` : '';
+    return `${timestamp} ${correlation} [service: ${service}] ${message}`;
   }
 } 

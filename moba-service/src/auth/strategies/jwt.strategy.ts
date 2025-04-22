@@ -50,7 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Set the correlation ID from the JWT token if available
     if (payload.correlationId) {
       this.logger.setCorrelationId(payload.correlationId);
-      this.logger.debug(`Using correlation ID from JWT token: ${payload.correlationId}`);
+      this.logger.debug(`Using correlation ID from JWT token: ${payload.correlationId}`, { service: 'JwtStrategy' });
     }
 
     return {

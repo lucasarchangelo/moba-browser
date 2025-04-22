@@ -13,10 +13,13 @@ import { JwtModule } from '@nestjs/jwt';
     JwtModule,
   ],
   providers: [
-    WinstonLoggerService,
+    {
+      provide: WinstonLoggerService,
+      useClass: WinstonLoggerService,
+    },
     {
       provide: ILogger,
-      useClass: WinstonLoggerService,
+      useExisting: WinstonLoggerService,
     },
     CorrelationMiddleware,
     MorganMiddleware,

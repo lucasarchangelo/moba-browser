@@ -25,7 +25,7 @@ export class AuthController {
     description: 'Invalid credentials',
   })
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    return this.authService.login(loginDto.email, loginDto.password);
+    return this.authService.login(loginDto);
   }
 
   @Get('logout')

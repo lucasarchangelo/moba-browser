@@ -18,12 +18,10 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     private readonly passwordService: PasswordService,
     @Inject(ILogger) private readonly logger: ILogger,
-  ) {
-    this.logger.setContext('UserService');
-  }
+  ) {}
 
   async create(registerUserDto: RegisterUserDto): Promise<UserResponseDto> {
-    this.logger.debug(`Creating new user with email: ${registerUserDto.email}`);
+    this.logger.debug(`Creating new user with email: ${registerUserDto.email}`, { service: 'UserService' });
     const hashedPassword = await bcryptjs.hash(registerUserDto.password, 10);
 
     const user = this.userRepository.create({
@@ -35,25 +33,25 @@ export class UserService {
     });
 
     const savedUser = await this.userRepository.save(user);
-    this.logger.info(`User created successfully with ID: ${savedUser.id}`);
+    this.logger.info(`User created successfully with ID: ${savedUser.id}`, { service: 'UserService' });
     return this.mapToResponseDto(savedUser);
   }
 
   async findAll(): Promise<UserResponseDto[]> {
-    this.logger.debug('Fetching all users');
+    this.logger.debug('Fetching all users', { service: 'UserService' });
     const users = await this.userRepository.find();
-    this.logger.info(`Retrieved ${users.length} users`);
+    this.logger.info(`Retrieved ${users.length} users`, { service: 'UserService' });
     return users.map(user => this.mapToResponseDto(user));
   }
 
   async findOne(id: string): Promise<UserResponseDto> {
-    this.logger.debug(`Finding user with ID: ${id}`);
+    this.logger.debug(`Finding user with ID: ${id}`, { service: 'UserService' });
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
-      this.logger.warn(`User not found with ID: ${id}`);
+      this.logger.warn(`User not found with ID: ${id}`, { service: 'UserService' });
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    this.logger.debug(`User found with ID: ${id}`);
+    this.logger.debug(`User found with ID: ${id}`, { service: 'UserService' });
     return this.mapToResponseDto(user);
   }
 
@@ -69,7 +67,7 @@ export class UserService {
   }
 
   async findByEmailWithPassword(email: string): Promise<User | null> {
-    this.logger.debug(`Finding user with email (including password): ${email}`);
+    this.logger.debug(`Finding user with email (including password): ${email}`, { service: 'UserService' });
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       this.logger.debug(`No user found with email: ${email}`);
@@ -83,10 +81,10 @@ export class UserService {
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    this.logger.debug(`Updating profile for user ID: ${userId}`);
+    this.logger.debug(`Updating profile for user ID: ${userId}`, { service: 'UserService' });
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      this.logger.warn(`User not found with ID: ${userId}`);
+      this.logger.warn(`User not found with ID: ${userId}`, { service: 'UserService' });
       throw new NotFoundException('User not found');
     }
 
@@ -96,20 +94,20 @@ export class UserService {
     );
 
     if (restrictedFields.length > 0) {
-      this.logger.warn(`Attempted to update restricted fields: ${restrictedFields.join(', ')}`);
+      this.logger.warn(`Attempted to update restricted fields: ${restrictedFields.join(', ')}`, { service: 'UserService' });
       throw new ForbiddenException(
         `You can only update: ${allowedFields.join(', ')}. Restricted fields: ${restrictedFields.join(', ')}`
       );
     }
 
     if (updateUserDto.password) {
-      this.logger.debug(`Updating password for user ID: ${userId}`);
+      this.logger.debug(`Updating password for user ID: ${userId}`, { service: 'UserService' });
       updateUserDto.password = await this.passwordService.hashPassword(updateUserDto.password);
     }
 
     Object.assign(user, updateUserDto);
     const updatedUser = await this.userRepository.save(user);
-    this.logger.info(`Profile updated successfully for user ID: ${userId}`);
+    this.logger.info(`Profile updated successfully for user ID: ${userId}`, { service: 'UserService' });
     return this.mapToResponseDto(updatedUser);
   }
 
@@ -120,79 +118,79 @@ export class UserService {
   ): Promise<UserResponseDto> {
     this.logger.debug(`Admin update requested for user ID: ${userId} by role: ${currentUserRole}`);
     if (currentUserRole !== Role.ADMIN) {
-      this.logger.warn(`Non-admin attempt to update user ID: ${userId}`);
+      this.logger.warn(`Non-admin attempt to update user ID: ${userId}`, { service: 'UserService' });
       throw new ForbiddenException('Only administrators can update user details');
     }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      this.logger.warn(`User not found with ID: ${userId}`);
+      this.logger.warn(`User not found with ID: ${userId}`, { service: 'UserService' });
       throw new NotFoundException('User not found');
     }
 
     if (updateUserDto.password) {
-      this.logger.debug(`Admin updating password for user ID: ${userId}`);
+      this.logger.debug(`Admin updating password for user ID: ${userId}`, { service: 'UserService' });
       updateUserDto.password = await this.passwordService.hashPassword(updateUserDto.password);
     }
 
     Object.assign(user, updateUserDto);
     const updatedUser = await this.userRepository.save(user);
-    this.logger.info(`User updated successfully by admin for user ID: ${userId}`);
+    this.logger.info(`User updated successfully by admin for user ID: ${userId}`, { service: 'UserService' });
     return this.mapToResponseDto(updatedUser);
   }
 
   async remove(id: string): Promise<void> {
-    this.logger.debug(`Attempting to remove user with ID: ${id}`);
+    this.logger.debug(`Attempting to remove user with ID: ${id}`, { service: 'UserService' });
     const result = await this.userRepository.delete(id);
     if (result.affected === 0) {
-      this.logger.warn(`User not found for deletion with ID: ${id}`);
+      this.logger.warn(`User not found for deletion with ID: ${id}`, { service: 'UserService' });
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    this.logger.info(`User removed successfully with ID: ${id}`);
+    this.logger.info(`User removed successfully with ID: ${id}`, { service: 'UserService' });
   }
 
   async updateLastLogin(userId: string): Promise<UserResponseDto> {
-    this.logger.debug(`Updating last login for user ID: ${userId}`);
+    this.logger.debug(`Updating last login for user ID: ${userId}`, { service: 'UserService' });
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      this.logger.warn(`User not found with ID: ${userId}`);
+      this.logger.warn(`User not found with ID: ${userId}`, { service: 'UserService' });
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     user.lastLoginAt = new Date();
     const updatedUser = await this.userRepository.save(user);
-    this.logger.info(`Last login updated for user ID: ${userId}`);
+    this.logger.info(`Last login updated for user ID: ${userId}`, { service: 'UserService' });
     return this.mapToResponseDto(updatedUser);
   }
 
   async verifyPassword(userId: string, password: string): Promise<boolean> {
-    this.logger.debug(`Verifying password for user ID: ${userId}`);
+    this.logger.debug(`Verifying password for user ID: ${userId}`, { service: 'UserService' });
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      this.logger.warn(`User not found with ID: ${userId}`);
+      this.logger.warn(`User not found with ID: ${userId}`, { service: 'UserService' });
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
     const isValid = await this.passwordService.comparePasswords(password, user.password);
-    this.logger.debug(`Password verification ${isValid ? 'successful' : 'failed'} for user ID: ${userId}`);
+    this.logger.debug(`Password verification ${isValid ? 'successful' : 'failed'} for user ID: ${userId}`, { service: 'UserService' });
     return isValid;
   }
 
   async updateRole(userId: string, newRole: Role, currentUserRole: Role): Promise<User> {
     this.logger.debug(`Role update requested for user ID: ${userId} to role: ${newRole} by role: ${currentUserRole}`);
     if (currentUserRole !== Role.ADMIN) {
-      this.logger.warn(`Non-admin attempt to change role for user ID: ${userId}`);
+      this.logger.warn(`Non-admin attempt to change role for user ID: ${userId}`, { service: 'UserService' });
       throw new ForbiddenException('Only administrators can change user roles');
     }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      this.logger.warn(`User not found with ID: ${userId}`);
+      this.logger.warn(`User not found with ID: ${userId}`, { service: 'UserService' });
       throw new NotFoundException('User not found');
     }
 
     user.role = newRole;
     const updatedUser = await this.userRepository.save(user);
-    this.logger.info(`Role updated successfully for user ID: ${userId} to: ${newRole}`);
+    this.logger.info(`Role updated successfully for user ID: ${userId} to: ${newRole}`, { service: 'UserService' }  );
     return updatedUser;
   }
 

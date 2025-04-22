@@ -27,19 +27,19 @@ export class CorrelationMiddleware implements NestMiddleware {
           const decoded = this.jwtService.verify(token, { secret });
           if (decoded && decoded.correlationId) {
             correlationId = decoded.correlationId;
-            this.logger.debug(`Using correlation ID from JWT token: ${correlationId}`);
+            this.logger.debug(`Using correlation ID from JWT token: ${correlationId}`, { service: 'CorrelationMiddleware' });
           }
         }
       } catch (error) {
         // Token verification failed, will generate new correlation ID
-        this.logger.debug('Failed to extract correlation ID from JWT token, generating new one');
+        this.logger.debug('Failed to extract correlation ID from JWT token, generating new one', { service: 'CorrelationMiddleware' });
       }
     }
     
     // If no valid correlation ID from JWT, generate a new one
     if (!correlationId) {
       correlationId = uuidv4();
-      this.logger.debug(`Generated new correlation ID: ${correlationId}`);
+      this.logger.debug(`Generated new correlation ID: ${correlationId}`, { service: 'CorrelationMiddleware' });
     }
     
     // Set the correlation ID in the request

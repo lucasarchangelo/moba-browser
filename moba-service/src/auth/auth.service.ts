@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { ILogger } from '../core/logger/logger.interface';
 import { Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -14,9 +15,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     @Inject(ILogger) private readonly logger: ILogger,
-  ) {
-    this.logger.setContext('AuthService');
-  }
+  ) {}
 
   /**
    * Validate user credentials and return a JWT token
@@ -24,30 +23,46 @@ export class AuthService {
    * @param password User's password
    * @returns JWT token and user data
    */
-  async login(email: string, password: string): Promise<LoginResponseDto> {
-    this.logger.debug(`Login attempt for email: ${email}`);
-    const user = await this.validateUser(email, password);
-    
-    // Generate a correlation ID for this user session
-    const correlationId = uuidv4();
-    this.logger.debug(`Generated correlation ID for user session: ${correlationId}`);
-    
-    const payload = {
-      sub: user.id.toString(),
+  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+    this.logger.debug(`Login attempt for user: ${loginDto.email}`, { service: 'AuthService' });
+    const user = await this.userService.findByEmailWithPassword(loginDto.email);
+    if (!user) {
+      this.logger.warn(`Login failed: User not found with email: ${loginDto.email}`, { service: 'AuthService' });
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await this.userService.verifyPassword(user.id, loginDto.password);
+    if (!isPasswordValid) {
+      this.logger.warn(`Login failed: Invalid password for user: ${loginDto.email}`, { service: 'AuthService' });
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.active) {
+      this.logger.warn(`Login failed: Inactive user attempted to login: ${loginDto.email}`, { service: 'AuthService' });
+      throw new UnauthorizedException('Account is inactive');
+    }
+
+    if (user.blocked) {
+      this.logger.warn(`Login failed: Blocked user attempted to login: ${loginDto.email}`, { service: 'AuthService' });
+      throw new UnauthorizedException('Account is blocked');
+    }
+
+    const payload = { 
+      sub: user.id, 
       email: user.email,
       role: user.role,
-      correlationId, // Include correlation ID in the JWT payload
+      correlationId: this.logger.getCorrelationId()
     };
 
-    await this.userService.updateLastLogin(user.id.toString());
+    const token = this.jwtService.sign(payload);
+    this.logger.info(`User logged in successfully: ${loginDto.email}`, { service: 'AuthService' });
 
-    const accessToken = await this.jwtService.signAsync(payload);
-    this.logger.info(`User logged in successfully: ${user.email} with correlation ID: ${correlationId}`);
+    await this.userService.updateLastLogin(user.id);
 
     return {
-      access_token: accessToken,
+      access_token: token,
       user: {
-        id: user.id.toString(),
+        id: user.id,
         email: user.email,
         nickname: user.nickname,
         role: user.role,
@@ -62,31 +77,18 @@ export class AuthService {
    * @returns User data if validation is successful
    * @throws UnauthorizedException if validation fails
    */
-  private async validateUser(email: string, password: string): Promise<User> {
-    const user = await this.userService.findByEmailWithPassword(email);
-    
-    if (!user) {
-      this.logger.warn(`Login failed: User not found with email: ${email}`);
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
+  async validateUser(id: string): Promise<any> {
+    this.logger.debug(`Validating user with ID: ${id}`, { service: 'AuthService' });
+    const user = await this.userService.findOne(id);
     if (!user.active) {
-      this.logger.warn(`Login failed: Inactive account for email: ${email}`);
-      throw new UnauthorizedException('User account is inactive');
+      this.logger.warn(`Validation failed: Inactive user ID: ${id}`, { service: 'AuthService' });
+      throw new UnauthorizedException('Account is inactive');
     }
-
     if (user.blocked) {
-      this.logger.warn(`Login failed: Blocked account for email: ${email}`);
-      throw new UnauthorizedException('User account is blocked');
+      this.logger.warn(`Validation failed: Blocked user ID: ${id}`, { service: 'AuthService' });
+      throw new UnauthorizedException('Account is blocked');
     }
-
-    const isPasswordValid = await this.userService.verifyPassword(user.id.toString(), password);
-    
-    if (!isPasswordValid) {
-      this.logger.warn(`Login failed: Invalid password for email: ${email}`);
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
+    this.logger.debug(`User validated successfully: ${id}`, { service: 'AuthService' });
     return user;
   }
 
@@ -95,7 +97,7 @@ export class AuthService {
     // 1. Blacklist the token
     // 2. Clear any server-side sessions
     // 3. Update user's last logout time
-    this.logger.info('User logged out');
+    this.logger.info('User logged out', { service: 'AuthService' });
     return { message: 'Successfully logged out' };
   }
 } 
