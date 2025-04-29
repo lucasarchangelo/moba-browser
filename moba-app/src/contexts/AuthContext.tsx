@@ -9,6 +9,7 @@ interface UserProfile {
   nickname: string;
   avatarUrl: string;
   lastLoginAt: string;
+  role: string;
 }
 
 interface AuthContextType {

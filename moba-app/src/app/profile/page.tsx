@@ -22,6 +22,7 @@ interface UserProfile {
   nickname: string;
   avatarUrl: string;
   lastLoginAt: string;
+  role: string;
   hero?: Hero;
 }
 

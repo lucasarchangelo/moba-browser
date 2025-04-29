@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { CreateInitialSchemasMigration } from './001-create-initial-schemas';
+import { CreateAllTablesMigration } from './001-create-all-tables';
 import { BaseMigration } from './base.migration';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class MigrationService implements OnModuleInit {
 
   constructor(private readonly dataSource: DataSource) {
     this.migrations = [
-      new CreateInitialSchemasMigration(this.dataSource),
+      new CreateAllTablesMigration(this.dataSource),
     ];
   }
 

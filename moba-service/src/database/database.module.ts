@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { User } from './schemas/user.schema';
-import { Hero } from './schemas/hero.schema';
-import { HeroSkill } from './schemas/hero-skill.schema';
-import { Skill } from './schemas/skill.schema';
-import { Item } from './schemas/item.schema';
-import { Inventory } from './schemas/inventory.schema';
-import { EquippedItem } from './schemas/equipped-item.schema';
-import { Match } from './schemas/match.schema';
-import { MatchEvent } from './schemas/match-event.schema';
+import { User } from './entity/user.entity';
+import { Hero } from './entity/hero.entity';
+import { HeroSkill } from './entity/hero-skill.entity';
+import { Skill } from './entity/skill.entity';
+import { Item } from './entity/item.entity';
+import { Inventory } from './entity/inventory.entity';
+import { EquippedItem } from './entity/equipped-item.entity';
+import { Match } from './entity/match.entity';
+import { MatchEvent } from './entity/match-event.entity';
 import { MigrationService } from './migrations/migration.service';
 
 @Module({

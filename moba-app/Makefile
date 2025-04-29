@@ -2,7 +2,7 @@ DOCKER_COMPOSE = docker-compose.yml
 SERVICE_NAME = moba_app
 
 dev:
-	docker compose up --build
+	docker compose up --build --watch
 
 up:
 	docker compose -f $(DOCKER_COMPOSE) up -d --build

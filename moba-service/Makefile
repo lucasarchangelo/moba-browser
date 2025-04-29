@@ -5,7 +5,7 @@ GRAFANA_NAME = grafana_moba_service
 LOKI_NAME = loki
 
 dev:
-	docker compose up --build $(SERVICE_NAME)
+	docker compose up --build $(SERVICE_NAME) --watch
 
 services:
 	docker compose -f $(DOCKER_COMPOSE) up -d --build $(DATABASE_NAME) $(LOKI_NAME) $(GRAFANA_NAME)

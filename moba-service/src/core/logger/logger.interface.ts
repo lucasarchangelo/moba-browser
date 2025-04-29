@@ -10,7 +10,7 @@ export interface ILoggerOptions {
 
 export interface ILoggerMetadata {
   service?: string;
-  [key: string]: any;
+  correlationId?: string;
 }
 
 export interface ILogger extends LoggerService {

@@ -12,6 +12,8 @@ import { CorrelationMiddleware } from './core/logger/correlation.middleware';
 import { MorganMiddleware } from './core/logger/morgan.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { ItemsModule } from './items/items.module';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { ConfigService } from '@nestjs/config';
     DatabaseModule,
     UsersModule,
     AuthModule,
+    ItemsModule,
+    SkillsModule,
   ],
   providers: [
     {
