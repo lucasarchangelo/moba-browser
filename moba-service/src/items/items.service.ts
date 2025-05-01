@@ -18,26 +18,29 @@ export class ItemsService {
     @Inject(ILogger) private readonly logger: ILogger,
   ) {}
 
-  async create(createItemDto: CreateItemDto): Promise<ItemResponseDto> {
+  async create(createItemDto: CreateItemDto): Promise<Item> {
     this.logger.debug(`Creating new item with name: ${createItemDto.name}`, this.serviceName);
     
-    const item = this.itemRepository.create(createItemDto);
+    const item = this.itemRepository.create({
+      ...createItemDto,
+      effects: createItemDto.effects || {},
+    });
     const savedItem = await this.itemRepository.save(item);
     
     this.logger.info(`Item created successfully with ID: ${savedItem.id}`, this.serviceName);
-    return this.mapToResponseDto(savedItem);
+    return savedItem;
   }
 
-  async findAll(): Promise<ItemResponseDto[]> {
+  async findAll(): Promise<Item[]> {
     this.logger.debug('Fetching all items', this.serviceName);
     
     const items = await this.itemRepository.find();
     
     this.logger.info(`Retrieved ${items.length} items`, this.serviceName);
-    return items.map(item => this.mapToResponseDto(item));
+    return items;
   }
 
-  async findOne(id: string): Promise<ItemResponseDto> {
+  async findOne(id: string): Promise<Item> {
     this.logger.debug(`Finding item with ID: ${id}`, this.serviceName);
     
     const item = await this.itemRepository.findOne({ where: { id } });
@@ -47,35 +50,46 @@ export class ItemsService {
     }
     
     this.logger.debug(`Item found with ID: ${id}`, this.serviceName);
-    return this.mapToResponseDto(item);
+    return item;
   }
 
-  async update(id: string, updateItemDto: UpdateItemDto): Promise<ItemResponseDto> {
+  async update(id: string, updateItemDto: UpdateItemDto): Promise<Item> {
     this.logger.debug(`Updating item with ID: ${id}`, this.serviceName);
     
-    const item = await this.itemRepository.findOne({ where: { id } });
-    if (!item) {
-      this.logger.warn(`Item not found with ID: ${id}`, this.serviceName);
-      throw new NotFoundException(`Item with ID ${id} not found`);
-    }
-
-    Object.assign(item, updateItemDto);
+    const item = await this.findOne(id);
+    
+    const updateData = {
+      ...(updateItemDto.name && { name: updateItemDto.name }),
+      ...(updateItemDto.description && { description: updateItemDto.description }),
+      ...(updateItemDto.baseHealth !== undefined && { baseHealth: updateItemDto.baseHealth }),
+      ...(updateItemDto.baseMana !== undefined && { baseMana: updateItemDto.baseMana }),
+      ...(updateItemDto.baseArmor !== undefined && { baseArmor: updateItemDto.baseArmor }),
+      ...(updateItemDto.baseMagicResistance !== undefined && { baseMagicResistance: updateItemDto.baseMagicResistance }),
+      ...(updateItemDto.baseAccuracy !== undefined && { baseAccuracy: updateItemDto.baseAccuracy }),
+      ...(updateItemDto.baseDamage !== undefined && { baseDamage: updateItemDto.baseDamage }),
+      ...(updateItemDto.baseMagicDamage !== undefined && { baseMagicDamage: updateItemDto.baseMagicDamage }),
+      ...(updateItemDto.isConsumable !== undefined && { isConsumable: updateItemDto.isConsumable }),
+      ...(updateItemDto.slotType && { slotType: updateItemDto.slotType }),
+      ...(updateItemDto.price !== undefined && { price: updateItemDto.price }),
+      ...(updateItemDto.imageUrl && { imageUrl: updateItemDto.imageUrl }),
+      ...(updateItemDto.effects && { effects: updateItemDto.effects }),
+    };
+    
+    Object.assign(item, updateData);
     const updatedItem = await this.itemRepository.save(item);
     
     this.logger.info(`Item updated successfully with ID: ${id}`, this.serviceName);
-    return this.mapToResponseDto(updatedItem);
+    return updatedItem;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string): Promise<Item> {
     this.logger.debug(`Attempting to remove item with ID: ${id}`, this.serviceName);
     
-    const result = await this.itemRepository.delete(id);
-    if (result.affected === 0) {
-      this.logger.warn(`Item not found for deletion with ID: ${id}`, this.serviceName);
-      throw new NotFoundException(`Item with ID ${id} not found`);
-    }
+    const item = await this.findOne(id);
+    const result = await this.itemRepository.remove(item);
     
     this.logger.info(`Item removed successfully with ID: ${id}`, this.serviceName);
+    return result;
   }
 
   private mapToResponseDto(item: Item): ItemResponseDto {
@@ -83,20 +97,17 @@ export class ItemsService {
       id: item.id,
       name: item.name,
       description: item.description,
-      type: item.type,
-      damage: item.damage,
-      armor: item.armor,
-      magicResistance: item.magicResistance,
-      health: item.health,
-      mana: item.mana,
-      strength: item.strength,
-      agility: item.agility,
-      intelligence: item.intelligence,
-      imageUrl: item.imageUrl,
-      price: item.price,
-      rarity: item.rarity,
-      slotType: item.slotType,
+      baseHealth: item.baseHealth,
+      baseMana: item.baseMana,
+      baseArmor: item.baseArmor,
+      baseMagicResistance: item.baseMagicResistance,
+      baseAccuracy: item.baseAccuracy,
+      baseDamage: item.baseDamage,
+      baseMagicDamage: item.baseMagicDamage,
       isConsumable: item.isConsumable,
+      slotType: item.slotType,
+      price: item.price,
+      imageUrl: item.imageUrl,
       effects: item.effects,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,

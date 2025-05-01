@@ -1,33 +1,54 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { MagicType } from '../../database/enums/magic-type.enum';
 
 export class SkillResponseDto {
-  @ApiProperty({ description: 'The unique identifier of the skill', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({ description: 'Skill ID' })
   id: string;
 
-  @ApiProperty({ description: 'The name of the skill', example: 'Fireball' })
+  @ApiProperty({ description: 'Skill name' })
   name: string;
 
-  @ApiProperty({ description: 'The description of the skill', example: 'Launches a ball of fire that deals damage to enemies' })
+  @ApiProperty({ description: 'Skill description' })
   description: string;
 
-  @ApiProperty({ description: 'The base damage of the skill', example: 100 })
+  @ApiProperty({ 
+    description: 'Magic type', 
+    enum: MagicType,
+    example: MagicType.FIRE
+  })
+  magicType: MagicType;
+
+  @ApiProperty({ description: 'Base damage' })
   baseDamage: number;
 
-  @ApiProperty({ description: 'The base cooldown of the skill in seconds', example: 5 })
-  baseCooldown: number;
-
-  @ApiProperty({ description: 'The base mana cost of the skill', example: 50 })
+  @ApiProperty({ description: 'Base mana cost' })
   baseManaCost: number;
 
-  @ApiProperty({ description: 'The base range of the skill', example: 500 })
-  baseRange: number;
+  @ApiProperty({ description: 'Required strength' })
+  requiredStrength: number;
 
-  @ApiProperty({ description: 'The base area of effect of the skill', example: 100 })
-  baseAreaOfEffect: number;
+  @ApiProperty({ description: 'Required dexterity' })
+  requiredDexterity: number;
 
-  @ApiProperty({ description: 'The date when the skill was created', example: '2024-04-29T12:00:00Z' })
+  @ApiProperty({ description: 'Required intelligence' })
+  requiredIntelligence: number;
+
+  @ApiProperty({ description: 'Skill price' })
+  price: number;
+
+  @ApiProperty({ description: 'Skill image URL' })
+  imageUrl: string;
+
+  @ApiProperty({ 
+    description: 'Skill effects', 
+    type: 'object',
+    additionalProperties: true
+  })
+  effects: Record<string, any>;
+
+  @ApiProperty({ description: 'Creation timestamp' })
   createdAt: Date;
 
-  @ApiProperty({ description: 'The date when the skill was last updated', example: '2024-04-29T12:00:00Z' })
+  @ApiProperty({ description: 'Last update timestamp' })
   updatedAt: Date;
 } 

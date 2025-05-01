@@ -5,7 +5,7 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { SkillResponseDto } from './dto/skill-response.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/auth/enums/roles.enum';
+import { UserRole } from 'src/database/enums/user-role.enum';
 
 @ApiTags('skills')
 @Controller('skills')
@@ -13,7 +13,7 @@ export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new skill' })
@@ -37,7 +37,7 @@ export class SkillsController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'Get all skills' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -51,7 +51,7 @@ export class SkillsController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'Get a skill by id' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -67,7 +67,7 @@ export class SkillsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a skill' })
@@ -97,7 +97,7 @@ export class SkillsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a skill' })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The skill has been successfully deleted.' })
@@ -109,7 +109,7 @@ export class SkillsController {
     status: HttpStatus.FORBIDDEN, 
     description: 'Only administrators can delete skills.' 
   })
-  remove(@Param('id') id: string): Promise<void> {
+  remove(@Param('id') id: string): Promise<SkillResponseDto> {
     return this.skillsService.remove(id);
   }
 } 

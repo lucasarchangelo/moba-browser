@@ -8,7 +8,6 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
@@ -16,7 +15,7 @@ import { UpdateItemDto } from './dto/update-item.dto';
 import { ItemResponseDto } from './dto/item-response.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../auth/enums/roles.enum';
+import { UserRole } from '../database/enums/user-role.enum';
 
 @ApiTags('items')
 @Controller('items')
@@ -24,7 +23,7 @@ export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new item' })
@@ -47,7 +46,7 @@ export class ItemsController {
 
   @Get()
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'Get all items' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -60,7 +59,7 @@ export class ItemsController {
 
   @Get(':id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'Get an item by id' })
   @ApiParam({ name: 'id', description: 'The item ID' })
   @ApiResponse({ 
@@ -77,7 +76,7 @@ export class ItemsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update an item (admin only)' })
   @ApiParam({ name: 'id', description: 'The item ID' })
@@ -107,7 +106,7 @@ export class ItemsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete an item' })
   @ApiParam({ name: 'id', description: 'The item ID' })
@@ -123,7 +122,7 @@ export class ItemsController {
     status: HttpStatus.FORBIDDEN, 
     description: 'Only administrators can delete items.' 
   })
-  remove(@Param('id') id: string): Promise<void> {
+  remove(@Param('id') id: string): Promise<ItemResponseDto> {
     return this.itemsService.remove(id);
   }
 } 

@@ -4,68 +4,77 @@ import { Repository } from 'typeorm';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from '../database/entity/skill.entity';
-import { ILogger, ILoggerMetadata } from '../core/logger/logger.interface';
-import { Inject } from '@nestjs/common';
+import { SkillResponseDto } from './dto/skill-response.dto';
 
 @Injectable()
 export class SkillsService {
-  private readonly metadata: ILoggerMetadata = {
-    service: 'SkillsService',
-  };
-
   constructor(
     @InjectRepository(Skill)
     private readonly skillRepository: Repository<Skill>,
-    @Inject(ILogger) private readonly logger: ILogger,
   ) {}
 
-  async create(createSkillDto: CreateSkillDto) {
-    this.logger.debug('Creating new skill', this.metadata);
-    const skill = this.skillRepository.create(createSkillDto);
-    const result = await this.skillRepository.save(skill);
-    this.logger.info(`Skill created with id: ${result.id}`, this.metadata);
-    return result;
+  async create(createSkillDto: CreateSkillDto): Promise<Skill> {
+    const skill = this.skillRepository.create({
+      ...createSkillDto,
+      effects: createSkillDto.effects || {},
+    });
+    return this.skillRepository.save(skill);
   }
 
-  async findAll() {
-    this.logger.debug('Finding all skills', this.metadata);
-    const skills = await this.skillRepository.find();
-    this.logger.info(`Found ${skills.length} skills`, this.metadata);
-    return skills;
+  async findAll(): Promise<Skill[]> {
+    return this.skillRepository.find();
   }
 
-  async findOne(id: string) {
-    this.logger.debug(`Finding skill with id: ${id}`, this.metadata);
-    const skill = await this.skillRepository.findOneBy({ id });
+  async findOne(id: string): Promise<Skill> {
+    const skill = await this.skillRepository.findOne({ where: { id } });
     if (!skill) {
-      this.logger.warn(`Skill not found with id: ${id}`, this.metadata);
-    } else {
-      this.logger.info(`Skill found with id: ${id}`, this.metadata);
+      throw new NotFoundException(`Skill with ID ${id} not found`);
     }
     return skill;
   }
 
-  async update(id: string, updateSkillDto: UpdateSkillDto) {
-    this.logger.debug(`Updating skill with id: ${id}`, this.metadata);
+  async update(id: string, updateSkillDto: UpdateSkillDto): Promise<Skill> {
     const skill = await this.findOne(id);
-    if (!skill) {
-      this.logger.warn(`Cannot update skill: Skill not found with id: ${id}`, this.metadata);
-      return null;
-    }
-    await this.skillRepository.update(id, updateSkillDto);
-    const updatedSkill = await this.findOne(id);
-    this.logger.info(`Skill updated with id: ${id}`, this.metadata);
-    return updatedSkill;
+    
+    const updateData = {
+      ...(updateSkillDto.name && { name: updateSkillDto.name }),
+      ...(updateSkillDto.description && { description: updateSkillDto.description }),
+      ...(updateSkillDto.magicType && { magicType: updateSkillDto.magicType }),
+      ...(updateSkillDto.baseDamage !== undefined && { baseDamage: updateSkillDto.baseDamage }),
+      ...(updateSkillDto.baseManaCost !== undefined && { baseManaCost: updateSkillDto.baseManaCost }),
+      ...(updateSkillDto.requiredStrength !== undefined && { requiredStrength: updateSkillDto.requiredStrength }),
+      ...(updateSkillDto.requiredDexterity !== undefined && { requiredDexterity: updateSkillDto.requiredDexterity }),
+      ...(updateSkillDto.requiredIntelligence !== undefined && { requiredIntelligence: updateSkillDto.requiredIntelligence }),
+      ...(updateSkillDto.price !== undefined && { price: updateSkillDto.price }),
+      ...(updateSkillDto.imageUrl && { imageUrl: updateSkillDto.imageUrl }),
+      ...(updateSkillDto.effects && { effects: updateSkillDto.effects }),
+    };
+    
+    Object.assign(skill, updateData);
+    return this.skillRepository.save(skill);
   }
 
-  async remove(id: string): Promise<void> {
-    this.logger.debug(`Removing skill with id: ${id}`, this.metadata);
+  async remove(id: string): Promise<Skill> {
     const skill = await this.findOne(id);
-    if (!skill) {
-      this.logger.warn(`Cannot remove skill: Skill not found with id: ${id}`, this.metadata);
-      throw new NotFoundException(`Skill with ID ${id} not found`);
-    }
-    const result = await this.skillRepository.remove(skill);
-    this.logger.info(`Skill removed with id: ${id}`, this.metadata);
-  } 
+    return this.skillRepository.remove(skill);
+  }
+
+  private mapToResponseDto(skill: Skill): SkillResponseDto {
+    return {
+      id: skill.id,
+      name: skill.name,
+      description: skill.description,
+      magicType: skill.magicType,
+      baseDamage: skill.baseDamage,
+      baseManaCost: skill.baseManaCost,
+      requiredStrength: skill.requiredStrength,
+      requiredDexterity: skill.requiredDexterity,
+      requiredIntelligence: skill.requiredIntelligence,
+      price: skill.price,
+      imageUrl: skill.imageUrl,
+      effects: skill.effects,
+      createdAt: skill.createdAt,
+      updatedAt: skill.updatedAt,
+    };
+  }
 } 

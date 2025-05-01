@@ -1,37 +1,68 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsEnum, IsOptional } from 'class-validator';
+import { MagicType } from '../../database/enums/magic-type.enum';
 
 export class CreateSkillDto {
-  @ApiProperty({ description: 'The name of the skill', example: 'Fireball' })
+  @ApiProperty({ description: 'Skill name' })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'The description of the skill', example: 'Launches a ball of fire that deals damage to enemies' })
+  @ApiProperty({ description: 'Skill description' })
   @IsString()
+  @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ description: 'The base damage of the skill', example: 100 })
-  @IsNumber()
-  @Min(0)
-  baseDamage: number;
+  @ApiProperty({ 
+    description: 'Magic type', 
+    enum: MagicType,
+    example: MagicType.FIRE
+  })
+  @IsEnum(MagicType)
+  @IsNotEmpty()
+  magicType: MagicType;
 
-  @ApiProperty({ description: 'The base cooldown of the skill in seconds', example: 5 })
+  @ApiProperty({ description: 'Base damage', default: 0 })
   @IsNumber()
-  @Min(0)
-  baseCooldown: number;
+  @IsOptional()
+  baseDamage?: number;
 
-  @ApiProperty({ description: 'The base mana cost of the skill', example: 50 })
+  @ApiProperty({ description: 'Base mana cost', default: 0 })
   @IsNumber()
-  @Min(0)
-  baseManaCost: number;
+  @IsOptional()
+  baseManaCost?: number;
 
-  @ApiProperty({ description: 'The base range of the skill', example: 500 })
+  @ApiProperty({ description: 'Required strength', default: 0 })
   @IsNumber()
-  @Min(0)
-  baseRange: number;
+  @IsOptional()
+  requiredStrength?: number;
 
-  @ApiProperty({ description: 'The base area of effect of the skill', example: 100 })
+  @ApiProperty({ description: 'Required dexterity', default: 0 })
   @IsNumber()
-  @Min(0)
-  baseAreaOfEffect: number;
+  @IsOptional()
+  requiredDexterity?: number;
+
+  @ApiProperty({ description: 'Required intelligence', default: 0 })
+  @IsNumber()
+  @IsOptional()
+  requiredIntelligence?: number;
+
+  @ApiProperty({ description: 'Skill price', default: 0 })
+  @IsNumber()
+  @IsOptional()
+  price?: number;
+
+  @ApiProperty({ description: 'Skill image URL' })
+  @IsString()
+  @IsNotEmpty()
+  imageUrl: string;
+
+  @ApiProperty({ 
+    description: 'Skill effects', 
+    type: 'object',
+    additionalProperties: true,
+    default: {}
+  })
+  @IsOptional()
+  effects?: Record<string, any>;
 }
