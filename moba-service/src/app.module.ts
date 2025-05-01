@@ -14,6 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ItemsModule } from './items/items.module';
 import { SkillsModule } from './skills/skills.module';
+import { SeasonsModule } from './seasons/seasons.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SkillsModule } from './skills/skills.module';
     AuthModule,
     ItemsModule,
     SkillsModule,
+    SeasonsModule
   ],
   providers: [
     {

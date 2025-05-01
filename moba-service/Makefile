@@ -25,3 +25,11 @@ logs:
 
 bash:
 	docker exec -it $(service) sh
+
+migrate-up:
+	chmod +x src/database/migrations/scritps/run-migrations.sh
+	./src/database/migrations/scritps/run-migrations.sh
+
+migrate-reset:
+	chmod +x src/database/migrations/scritps/reset-migrations.sh
+	./src/database/migrations/scritps/reset-migrations.sh
