@@ -5,7 +5,7 @@ import { User } from '../database/entity/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { PasswordService } from './services/password.service';
-import { Role } from '../auth/enums/roles.enum';
+import { UserRole } from '../database/enums/user-role.enum';
 import * as bcryptjs from 'bcryptjs';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { ILogger } from '../core/logger/logger.interface';
@@ -30,7 +30,7 @@ export class UserService {
     const user = this.userRepository.create({
       ...registerUserDto,
       password: hashedPassword,
-      role: Role.USER,
+      role: UserRole.USER,
       active: true,
       blocked: false,
     });
@@ -117,10 +117,10 @@ export class UserService {
   async updateUser(
     userId: string,
     updateUserDto: UpdateUserDto,
-    currentUserRole: Role,
+    currentUserRole: UserRole,
   ): Promise<UserResponseDto> {
     this.logger.debug(`Admin update requested for user ID: ${userId} by role: ${currentUserRole}`);
-    if (currentUserRole !== Role.ADMIN) {
+    if (currentUserRole !== UserRole.ADMIN) {
       this.logger.warn(`Non-admin attempt to update user ID: ${userId}`, this.serviceName);
       throw new ForbiddenException('Only administrators can update user details');
     }
@@ -152,20 +152,6 @@ export class UserService {
     this.logger.info(`User removed successfully with ID: ${id}`, this.serviceName);
   }
 
-  async updateLastLogin(userId: string): Promise<UserResponseDto> {
-    this.logger.debug(`Updating last login for user ID: ${userId}`, this.serviceName);
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      this.logger.warn(`User not found with ID: ${userId}`, this.serviceName);
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    user.lastLoginAt = new Date();
-    const updatedUser = await this.userRepository.save(user);
-    this.logger.info(`Last login updated for user ID: ${userId}`, this.serviceName);
-    return this.mapToResponseDto(updatedUser);
-  }
-
   async verifyPassword(userId: string, password: string): Promise<boolean> {
     this.logger.debug(`Verifying password for user ID: ${userId}`, this.serviceName);
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -178,9 +164,9 @@ export class UserService {
     return isValid;
   }
 
-  async updateRole(userId: string, newRole: Role, currentUserRole: Role): Promise<User> {
+  async updateRole(userId: string, newRole: UserRole, currentUserRole: UserRole): Promise<User> {
     this.logger.debug(`Role update requested for user ID: ${userId} to role: ${newRole} by role: ${currentUserRole}`);
-    if (currentUserRole !== Role.ADMIN) {
+    if (currentUserRole !== UserRole.ADMIN) {
       this.logger.warn(`Non-admin attempt to change role for user ID: ${userId}`, this.serviceName);
       throw new ForbiddenException('Only administrators can change user roles');
     }
@@ -208,7 +194,6 @@ export class UserService {
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      lastLoginAt: user.lastLoginAt,
     };
   }
 } 

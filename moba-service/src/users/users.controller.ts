@@ -17,7 +17,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../auth/enums/roles.enum';
+import { UserRole } from '../database/enums/user-role.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
 
 
@@ -44,7 +44,7 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ 
@@ -61,7 +61,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiParam({ name: 'id', description: 'The user ID' })
@@ -117,7 +117,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a user (admin only)' })
   @ApiParam({ name: 'id', description: 'The user ID' })
@@ -152,7 +152,7 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a user' })
   @ApiParam({ name: 'id', description: 'The user ID' })
