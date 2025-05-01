@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { ItemRarity } from '../enums/item-rarity.enum';
 import { ItemSlotType } from '../enums/item-slot-type.enum';
 
 @Entity('items')
@@ -13,54 +12,45 @@ export class Item {
   @Column()
   description: string;
 
-  @Column()
-  type: string;
+  @Column({ name: 'base_health', default: 0 })
+  baseHealth: number;
 
-  @Column({ default: 0 })
-  damage: number;
+  @Column({ name: 'base_mana', default: 0 })
+  baseMana: number;
 
-  @Column({ default: 0 })
-  armor: number;
+  @Column({ name: 'base_armor', default: 0 })
+  baseArmor: number;
 
-  @Column({ default: 0 })
-  magicResistance: number;
+  @Column({ name: 'base_magic_resistance', default: 0 })
+  baseMagicResistance: number;
 
-  @Column({ default: 0 })
-  health: number;
+  @Column({ name: 'base_accuracy', default: 0 })
+  baseAccuracy: number;
 
-  @Column({ default: 0 })
-  mana: number;
+  @Column({ name: 'base_damage', default: 0 })
+  baseDamage: number;
 
-  @Column({ default: 0 })
-  strength: number;
+  @Column({ name: 'base_magic_damage', default: 0 })
+  baseMagicDamage: number;
 
-  @Column({ default: 0 })
-  agility: number;
+  @Column({ name: 'is_consumable', default: false })
+  isConsumable: boolean;
 
-  @Column({ default: 0 })
-  intelligence: number;
-
-  @Column()
-  imageUrl: string;
+  @Column({ name: 'slot_type', type: 'enum', enum: ItemSlotType })
+  slotType: ItemSlotType;
 
   @Column()
   price: number;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @Column({ type: 'enum', enum: ItemRarity })
-  rarity: ItemRarity;
-
-  @Column({ type: 'enum', enum: ItemSlotType })
-  slotType: ItemSlotType;
-
-  @Column({ default: false })
-  isConsumable: boolean;
+  @Column({ name: 'image_url' })
+  imageUrl: string;
 
   @Column('jsonb')
   effects: Record<string, any>;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 } 

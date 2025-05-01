@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Role } from '../../auth/enums/roles.enum';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { UserRole } from '../../database/enums/user-role.enum';
+import { Hero } from './hero.entity';
 
 @Entity('users')
 export class User {
@@ -21,22 +22,22 @@ export class User {
   @Column({ default: true })
   active: boolean;
 
-  @Column({ nullable: true })
-  lastLoginAt: Date;
-
   @Column({ 
     type: 'enum', 
-    enum: Role, 
-    default: Role.USER 
+    enum: UserRole, 
+    default: UserRole.USER 
   })
-  role: Role;
+  role: UserRole;
 
-  @Column({ nullable: true })
+  @Column({ name: 'avatar_url', nullable: true })
   avatarUrl: string;
 
-  @CreateDateColumn()
+  @OneToMany(() => Hero, hero => hero.user)
+  heroes: Hero[];
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 } 

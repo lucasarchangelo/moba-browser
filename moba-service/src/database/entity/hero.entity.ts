@@ -1,11 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Unique } from 'typeorm';
 import { HeroSkill } from './hero-skill.entity';
 import { Inventory } from './inventory.entity';
 import { EquippedItem } from './equipped-item.entity';
 import { HeroType } from '../enums/hero-type.enum';
-
+import { User } from './user.entity';
+import { Season } from './season.entity';
 
 @Entity('heroes')
+@Unique(['userId', 'seasonId'])
 export class Hero {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -16,36 +18,37 @@ export class Hero {
   @Column()
   description: string;
 
-  @Column({
-    type: 'enum',
-    enum: HeroType,
-    default: HeroType.KNIGHT
-  })
-  type: HeroType;
+  @Column({ default: 0 })
+  level: number;
 
   @Column({ default: 0 })
-  baseHealth: number;
+  strength: number;
 
   @Column({ default: 0 })
-  baseMana: number;
+  dexterity: number;
 
   @Column({ default: 0 })
-  baseDamage: number;
+  intelligence: number;
 
   @Column({ default: 0 })
-  baseArmor: number;
+  currentLife: number;
 
   @Column({ default: 0 })
-  baseMagicResistance: number;
+  currentMana: number;
 
-  @Column({ default: 0 })
-  baseMovementSpeed: number;
+  @ManyToOne(() => User, user => user.heroes)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
-  @Column({ default: 0 })
-  baseAttackSpeed: number;
+  @Column({ nullable: false })
+  userId: string;
 
-  @Column({ default: 0 })
-  baseAttackRange: number;
+  @ManyToOne(() => Season, season => season.heroes)
+  @JoinColumn({ name: 'seasonId' })
+  season: Season;
+
+  @Column({ nullable: false })
+  seasonId: string;
 
   @OneToMany(() => HeroSkill, heroSkill => heroSkill.hero)
   heroSkills: HeroSkill[];

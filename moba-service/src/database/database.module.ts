@@ -10,8 +10,7 @@ import { Inventory } from './entity/inventory.entity';
 import { EquippedItem } from './entity/equipped-item.entity';
 import { Match } from './entity/match.entity';
 import { MatchEvent } from './entity/match-event.entity';
-import { MigrationService } from './migrations/migration.service';
-
+import { Season } from './entity/season.entity';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -23,15 +22,15 @@ import { MigrationService } from './migrations/migration.service';
         username: configService.get('DATABASE_USER'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_NAME'),
-        entities: [User, Hero, HeroSkill, Skill, Item, Inventory, EquippedItem, Match, MatchEvent],
-        synchronize: configService.get('NODE_ENV') !== 'production', // Auto-sync schema in development
+        entities: [User, Hero, HeroSkill, Skill, Item, Inventory, EquippedItem, Match, MatchEvent, Season],
+        synchronize: false,
         logging: configService.get('NODE_ENV') !== 'production',
       }),
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([User, Hero, HeroSkill, Skill, Item, Inventory, EquippedItem, Match, MatchEvent]),
   ],
-  providers: [MigrationService],
+  providers: [],
   exports: [TypeOrmModule],
 })
 export class DatabaseModule {} 
