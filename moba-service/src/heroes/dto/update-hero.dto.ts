@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsObject, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsObject, IsOptional, IsEnum, IsUUID, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateHeroDto } from './create-hero.dto';
@@ -79,16 +79,51 @@ class HeroSkillDto {
   imageUrl?: string;
 }
 
-export class UpdateHeroDto extends PartialType(CreateHeroDto) {
-  @ApiPropertyOptional({ description: 'Hero name' })
+export class UpdateHeroDto {
+  @ApiProperty({ description: 'Hero name', required: false })
   @IsString()
   @IsOptional()
   name?: string;
 
-  @ApiPropertyOptional({ description: 'Hero description' })
+  @ApiProperty({ description: 'Hero description', required: false })
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  level?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  strength?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  dexterity?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  intelligence?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  currentLife?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  currentMana?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  baseDamage?: number;
 
   @ApiPropertyOptional({ 
     description: 'Hero type', 
@@ -105,22 +140,8 @@ export class UpdateHeroDto extends PartialType(CreateHeroDto) {
   @IsOptional()
   abilities?: string[];
 
-  @ApiPropertyOptional({ description: 'Hero image URL' })
+  @ApiProperty({ description: 'Hero image URL', required: false })
   @IsString()
   @IsOptional()
   imageUrl?: string;
-
-  @ApiPropertyOptional({ description: 'Hero attributes' })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => CreateHeroDto.prototype.attributes.constructor)
-  @IsOptional()
-  attributes?: CreateHeroDto['attributes'];
-
-  @ApiPropertyOptional({ description: 'Hero skills' })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateHeroDto.prototype.skills[0].constructor)
-  @IsOptional()
-  skills?: CreateHeroDto['skills'];
 } 
