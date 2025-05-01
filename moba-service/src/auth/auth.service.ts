@@ -57,8 +57,6 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
     this.logger.info(`User logged in successfully: ${loginDto.email}`, { service: 'AuthService' });
 
-    await this.userService.updateLastLogin(user.id);
-
     return {
       access_token: token,
       user: {
