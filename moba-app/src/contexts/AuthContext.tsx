@@ -8,7 +8,8 @@ interface UserProfile {
   email: string;
   nickname: string;
   avatarUrl: string;
-  lastLoginAt: string;
+  createdAt: string;
+  updatedAt: string;
   role: string;
 }
 

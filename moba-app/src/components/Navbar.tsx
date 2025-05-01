@@ -13,7 +13,7 @@ export default function Navbar() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -74,7 +74,7 @@ export default function Navbar() {
                 <div className="text-right hidden md:block">
                   <div className="text-white text-sm font-medium">{user.nickname}</div>
                   <div className="text-gray-400 text-xs">
-                    Last login: {formatDate(user.lastLoginAt)}
+                    Last login: {formatDate(user.updatedAt)}
                   </div>
                 </div>
                 <div className="relative h-10 w-10 rounded-full overflow-hidden">
@@ -211,7 +211,7 @@ export default function Navbar() {
                 <div className="ml-3">
                   <div className="text-base font-medium text-white">{user.nickname}</div>
                   <div className="text-sm font-medium text-gray-400">
-                    Last login: {formatDate(user.lastLoginAt)}
+                    Last login: {formatDate(user.updatedAt)}
                   </div>
                 </div>
               </div>

@@ -21,9 +21,9 @@ interface UserProfile {
   email: string;
   nickname: string;
   avatarUrl: string;
-  lastLoginAt: string;
   role: string;
   hero?: Hero;
+  updatedAt: string;
 }
 
 export default function Profile() {
@@ -138,7 +138,7 @@ export default function Profile() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-400">Last Login</label>
-                        <div className="mt-1 text-white">{formatDate(profile?.lastLoginAt || '')}</div>
+                        <div className="mt-1 text-white">{formatDate(profile?.updatedAt || '')}</div>
                       </div>
                     </div>
                   </div>

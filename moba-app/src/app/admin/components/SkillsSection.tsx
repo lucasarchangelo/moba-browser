@@ -9,11 +9,15 @@ interface Skill {
   id: string;
   name: string;
   description: string;
+  magicType: string;
   baseDamage: number;
-  baseCooldown: number;
   baseManaCost: number;
-  baseRange: number;
-  baseAreaOfEffect: number;
+  requiredStrength: number;
+  requiredAgility: number;
+  requiredIntelligence: number;
+  price: number;
+  imageUrl: string;
+  effects: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,11 +25,15 @@ interface Skill {
 interface SkillFormData {
   name: string;
   description: string;
+  magicType: string;
   baseDamage: number;
-  baseCooldown: number;
   baseManaCost: number;
-  baseRange: number;
-  baseAreaOfEffect: number;
+  requiredStrength: number;
+  requiredAgility: number;
+  requiredIntelligence: number;
+  price: number;
+  imageUrl: string;
+  effects: Record<string, any>;
 }
 
 export default function SkillsSection() {
@@ -38,11 +46,15 @@ export default function SkillsSection() {
   const [formData, setFormData] = useState<SkillFormData>({
     name: '',
     description: '',
+    magicType: 'PHYSICAL',
     baseDamage: 0,
-    baseCooldown: 0,
     baseManaCost: 0,
-    baseRange: 0,
-    baseAreaOfEffect: 0,
+    requiredStrength: 0,
+    requiredAgility: 0,
+    requiredIntelligence: 0,
+    price: 0,
+    imageUrl: '',
+    effects: {},
   });
 
   useEffect(() => {
@@ -87,16 +99,6 @@ export default function SkillsSection() {
         return;
       }
 
-      // Ensure all numeric fields are actually numbers
-      const processedFormData = {
-        ...formData,
-        baseDamage: Number(formData.baseDamage),
-        baseCooldown: Number(formData.baseCooldown),
-        baseManaCost: Number(formData.baseManaCost),
-        baseRange: Number(formData.baseRange),
-        baseAreaOfEffect: Number(formData.baseAreaOfEffect),
-      };
-
       const url = editingSkill
         ? `http://localhost:3000/skills/${editingSkill.id}`
         : 'http://localhost:3000/skills';
@@ -108,7 +110,7 @@ export default function SkillsSection() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(processedFormData),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
@@ -159,11 +161,15 @@ export default function SkillsSection() {
     setFormData({
       name: skill.name,
       description: skill.description,
+      magicType: skill.magicType,
       baseDamage: skill.baseDamage,
-      baseCooldown: skill.baseCooldown,
       baseManaCost: skill.baseManaCost,
-      baseRange: skill.baseRange,
-      baseAreaOfEffect: skill.baseAreaOfEffect,
+      requiredStrength: skill.requiredStrength,
+      requiredAgility: skill.requiredAgility,
+      requiredIntelligence: skill.requiredIntelligence,
+      price: skill.price,
+      imageUrl: skill.imageUrl,
+      effects: skill.effects,
     });
     setIsModalOpen(true);
   };
@@ -172,18 +178,21 @@ export default function SkillsSection() {
     setFormData({
       name: '',
       description: '',
+      magicType: 'PHYSICAL',
       baseDamage: 0,
-      baseCooldown: 0,
       baseManaCost: 0,
-      baseRange: 0,
-      baseAreaOfEffect: 0,
+      requiredStrength: 0,
+      requiredAgility: 0,
+      requiredIntelligence: 0,
+      price: 0,
+      imageUrl: '',
+      effects: {},
     });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // Convert string values to numbers for numeric fields
     if (type === 'number') {
       setFormData(prev => ({
         ...prev,
@@ -228,25 +237,22 @@ export default function SkillsSection() {
           <thead>
             <tr>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Image
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                 Name
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Description
+                Magic Type
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Damage
+                Base Damage
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Cooldown
+                Base Mana Cost
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Mana Cost
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Range
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Area of Effect
+                Price
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                 Actions
@@ -256,26 +262,27 @@ export default function SkillsSection() {
           <tbody className="divide-y divide-gray-700">
             {skills.map((skill) => (
               <tr key={skill.id} className="hover:bg-gray-700 transition-colors duration-150">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <img
+                    src={skill.imageUrl}
+                    alt={skill.name}
+                    className="w-12 h-12 object-contain rounded shadow"
+                  />
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                   {skill.name}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-300 max-w-xs truncate">
-                  {skill.description}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {skill.magicType}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {skill.baseDamage}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {skill.baseCooldown}s
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {skill.baseManaCost}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {skill.baseRange}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {skill.baseAreaOfEffect}
+                  {skill.price}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   <button
@@ -321,6 +328,19 @@ export default function SkillsSection() {
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Image URL
+                  </label>
+                  <input
+                    type="text"
+                    name="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
+                  />
+                </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Description
@@ -336,26 +356,51 @@ export default function SkillsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Base Damage
+                    Magic Type
+                  </label>
+                  <select
+                    name="magicType"
+                    value={formData.magicType}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
+                  >
+                    <option value="PHYSICAL">Physical</option>
+                    <option value="FIRE">Fire</option>
+                    <option value="ICE">Ice</option>
+                    <option value="LIGHTNING">Lightning</option>
+                    <option value="EARTH">Earth</option>
+                    <option value="WIND">Wind</option>
+                    <option value="WATER">Water</option>
+                    <option value="LIGHT">Light</option>
+                    <option value="DARK">Dark</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Price
                   </label>
                   <input
                     type="number"
-                    name="baseDamage"
-                    value={formData.baseDamage}
+                    name="price"
+                    value={formData.price}
                     onChange={handleChange}
                     required
                     min="0"
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 mt-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Base Cooldown (seconds)
+                    Base Damage
                   </label>
                   <input
                     type="number"
-                    name="baseCooldown"
-                    value={formData.baseCooldown}
+                    name="baseDamage"
+                    value={formData.baseDamage}
                     onChange={handleChange}
                     required
                     min="0"
@@ -378,12 +423,12 @@ export default function SkillsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Base Range
+                    Required Strength
                   </label>
                   <input
                     type="number"
-                    name="baseRange"
-                    value={formData.baseRange}
+                    name="requiredStrength"
+                    value={formData.requiredStrength}
                     onChange={handleChange}
                     required
                     min="0"
@@ -392,12 +437,26 @@ export default function SkillsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Base Area of Effect
+                    Required Agility
                   </label>
                   <input
                     type="number"
-                    name="baseAreaOfEffect"
-                    value={formData.baseAreaOfEffect}
+                    name="requiredAgility"
+                    value={formData.requiredAgility}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Required Intelligence
+                  </label>
+                  <input
+                    type="number"
+                    name="requiredIntelligence"
+                    value={formData.requiredIntelligence}
                     onChange={handleChange}
                     required
                     min="0"

@@ -9,20 +9,17 @@ interface Item {
   id: string;
   name: string;
   description: string;
-  type: string;
-  damage: number;
-  armor: number;
-  magicResistance: number;
-  health: number;
-  mana: number;
-  strength: number;
-  agility: number;
-  intelligence: number;
-  imageUrl: string;
-  price: number;
-  rarity: string;
-  slotType: string;
+  baseHealth: number;
+  baseMana: number;
+  baseArmor: number;
+  baseMagicResistance: number;
+  baseAccuracy: number;
+  baseDamage: number;
+  baseMagicDamage: number;
   isConsumable: boolean;
+  slotType: string;
+  price: number;
+  imageUrl: string;
   effects: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
@@ -31,20 +28,17 @@ interface Item {
 interface ItemFormData {
   name: string;
   description: string;
-  type: string;
-  damage: number;
-  armor: number;
-  magicResistance: number;
-  health: number;
-  mana: number;
-  strength: number;
-  agility: number;
-  intelligence: number;
-  imageUrl: string;
-  price: number;
-  rarity: string;
-  slotType: string;
+  baseHealth: number;
+  baseMana: number;
+  baseArmor: number;
+  baseMagicResistance: number;
+  baseAccuracy: number;
+  baseDamage: number;
+  baseMagicDamage: number;
   isConsumable: boolean;
+  slotType: string;
+  price: number;
+  imageUrl: string;
   effects: Record<string, any>;
 }
 
@@ -58,20 +52,17 @@ export default function ItemsSection() {
   const [formData, setFormData] = useState<ItemFormData>({
     name: '',
     description: '',
-    type: '',
-    damage: 0,
-    armor: 0,
-    magicResistance: 0,
-    health: 0,
-    mana: 0,
-    strength: 0,
-    agility: 0,
-    intelligence: 0,
-    imageUrl: '',
-    price: 0,
-    rarity: 'COMMON',
-    slotType: 'HEAD',
+    baseHealth: 0,
+    baseMana: 0,
+    baseArmor: 0,
+    baseMagicResistance: 0,
+    baseAccuracy: 0,
+    baseDamage: 0,
+    baseMagicDamage: 0,
     isConsumable: false,
+    slotType: 'HEAD',
+    price: 0,
+    imageUrl: '',
     effects: {},
   });
 
@@ -117,20 +108,6 @@ export default function ItemsSection() {
         return;
       }
 
-      // Ensure all numeric fields are actually numbers
-      const processedFormData = {
-        ...formData,
-        damage: Number(formData.damage),
-        armor: Number(formData.armor),
-        magicResistance: Number(formData.magicResistance),
-        health: Number(formData.health),
-        mana: Number(formData.mana),
-        strength: Number(formData.strength),
-        agility: Number(formData.agility),
-        intelligence: Number(formData.intelligence),
-        price: Number(formData.price),
-      };
-
       const url = editingItem
         ? `http://localhost:3000/items/${editingItem.id}`
         : 'http://localhost:3000/items';
@@ -142,7 +119,7 @@ export default function ItemsSection() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(processedFormData),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
@@ -193,20 +170,17 @@ export default function ItemsSection() {
     setFormData({
       name: item.name,
       description: item.description,
-      type: item.type,
-      damage: item.damage,
-      armor: item.armor,
-      magicResistance: item.magicResistance,
-      health: item.health,
-      mana: item.mana,
-      strength: item.strength,
-      agility: item.agility,
-      intelligence: item.intelligence,
-      imageUrl: item.imageUrl,
-      price: item.price,
-      rarity: item.rarity,
-      slotType: item.slotType,
+      baseHealth: item.baseHealth,
+      baseMana: item.baseMana,
+      baseArmor: item.baseArmor,
+      baseMagicResistance: item.baseMagicResistance,
+      baseAccuracy: item.baseAccuracy,
+      baseDamage: item.baseDamage,
+      baseMagicDamage: item.baseMagicDamage,
       isConsumable: item.isConsumable,
+      slotType: item.slotType,
+      price: item.price,
+      imageUrl: item.imageUrl,
       effects: item.effects,
     });
     setIsModalOpen(true);
@@ -216,20 +190,17 @@ export default function ItemsSection() {
     setFormData({
       name: '',
       description: '',
-      type: '',
-      damage: 0,
-      armor: 0,
-      magicResistance: 0,
-      health: 0,
-      mana: 0,
-      strength: 0,
-      agility: 0,
-      intelligence: 0,
-      imageUrl: '',
-      price: 0,
-      rarity: 'COMMON',
-      slotType: 'HEAD',
+      baseHealth: 0,
+      baseMana: 0,
+      baseArmor: 0,
+      baseMagicResistance: 0,
+      baseAccuracy: 0,
+      baseDamage: 0,
+      baseMagicDamage: 0,
       isConsumable: false,
+      slotType: 'HEAD',
+      price: 0,
+      imageUrl: '',
       effects: {},
     });
   };
@@ -237,7 +208,6 @@ export default function ItemsSection() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // Convert string values to numbers for numeric fields
     if (type === 'number') {
       setFormData(prev => ({
         ...prev,
@@ -287,16 +257,13 @@ export default function ItemsSection() {
           <thead>
             <tr>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                
+                Image
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                 Name
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Rarity
+                Slot Type
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                 Price
@@ -311,7 +278,7 @@ export default function ItemsSection() {
               <tr key={item.id} className="hover:bg-gray-700 transition-colors duration-150">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   <img
-                    src={`/assets/${item.slotType}/${item.imageUrl}`}
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-12 h-12 object-contain rounded shadow"
                   />
@@ -320,10 +287,7 @@ export default function ItemsSection() {
                   {item.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {item.type}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {item.rarity}
+                  {item.slotType}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {item.price}
@@ -374,12 +338,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Type
+                    Image URL
                   </label>
                   <input
                     type="text"
-                    name="type"
-                    value={formData.type}
+                    name="imageUrl"
+                    value={formData.imageUrl}
                     onChange={handleChange}
                     required
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
@@ -400,16 +364,23 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Image URL
+                    Slot Type
                   </label>
-                  <input
-                    type="text"
-                    name="imageUrl"
-                    value={formData.imageUrl}
+                  <select
+                    name="slotType"
+                    value={formData.slotType}
                     onChange={handleChange}
                     required
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
-                  />
+                  >
+                    <option value="HEAD">Head</option>
+                    <option value="CHEST">Chest</option>
+                    <option value="HANDS">Hands</option>
+                    <option value="LEGS">Legs</option>
+                    <option value="FEET">Feet</option>
+                    <option value="WEAPON">Weapon</option>
+                    <option value="ACCESSORY">Accessory</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -424,43 +395,6 @@ export default function ItemsSection() {
                     min="0"
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Rarity
-                  </label>
-                  <select
-                    name="rarity"
-                    value={formData.rarity}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
-                  >
-                    <option value="COMMON">Common</option>
-                    <option value="UNCOMMON">Uncommon</option>
-                    <option value="RARE">Rare</option>
-                    <option value="EPIC">Epic</option>
-                    <option value="LEGENDARY">Legendary</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Slot Type
-                  </label>
-                  <select
-                    name="slotType"
-                    value={formData.slotType}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
-                  >
-                    <option value="HEAD">Head</option>
-                    <option value="CHEST">Chest</option>
-                    <option value="LEGS">Legs</option>
-                    <option value="FEET">Feet</option>
-                    <option value="WEAPON">Weapon</option>
-                    <option value="ACCESSORY">Accessory</option>
-                  </select>
                 </div>
                 <div className="col-span-2">
                   <label className="flex items-center text-sm font-medium text-gray-300">
@@ -479,12 +413,12 @@ export default function ItemsSection() {
               <div className="grid grid-cols-2 gap-6 mt-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Damage
+                    Base Health
                   </label>
                   <input
                     type="number"
-                    name="damage"
-                    value={formData.damage}
+                    name="baseHealth"
+                    value={formData.baseHealth}
                     onChange={handleChange}
                     required
                     min="0"
@@ -493,12 +427,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Armor
+                    Base Mana
                   </label>
                   <input
                     type="number"
-                    name="armor"
-                    value={formData.armor}
+                    name="baseMana"
+                    value={formData.baseMana}
                     onChange={handleChange}
                     required
                     min="0"
@@ -507,12 +441,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Magic Resistance
+                    Base Armor
                   </label>
                   <input
                     type="number"
-                    name="magicResistance"
-                    value={formData.magicResistance}
+                    name="baseArmor"
+                    value={formData.baseArmor}
                     onChange={handleChange}
                     required
                     min="0"
@@ -521,12 +455,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Health
+                    Base Magic Resistance
                   </label>
                   <input
                     type="number"
-                    name="health"
-                    value={formData.health}
+                    name="baseMagicResistance"
+                    value={formData.baseMagicResistance}
                     onChange={handleChange}
                     required
                     min="0"
@@ -535,12 +469,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Mana
+                    Base Accuracy
                   </label>
                   <input
                     type="number"
-                    name="mana"
-                    value={formData.mana}
+                    name="baseAccuracy"
+                    value={formData.baseAccuracy}
                     onChange={handleChange}
                     required
                     min="0"
@@ -549,12 +483,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Strength
+                    Base Damage
                   </label>
                   <input
                     type="number"
-                    name="strength"
-                    value={formData.strength}
+                    name="baseDamage"
+                    value={formData.baseDamage}
                     onChange={handleChange}
                     required
                     min="0"
@@ -563,26 +497,12 @@ export default function ItemsSection() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Agility
+                    Base Magic Damage
                   </label>
                   <input
                     type="number"
-                    name="agility"
-                    value={formData.agility}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Intelligence
-                  </label>
-                  <input
-                    type="number"
-                    name="intelligence"
-                    value={formData.intelligence}
+                    name="baseMagicDamage"
+                    value={formData.baseMagicDamage}
                     onChange={handleChange}
                     required
                     min="0"
