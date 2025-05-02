@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { ItemsModule } from './items/items.module';
 import { SkillsModule } from './skills/skills.module';
 import { SeasonsModule } from './seasons/seasons.module';
+import { HeroesModule } from './heroes/heroes.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { SeasonsModule } from './seasons/seasons.module';
     AuthModule,
     ItemsModule,
     SkillsModule,
+    HeroesModule,
     SeasonsModule
   ],
   providers: [

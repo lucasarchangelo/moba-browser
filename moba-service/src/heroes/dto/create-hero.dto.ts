@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max, IsInt } from 'class-validator';
 
 export class CreateHeroDto {
   @ApiProperty({ description: 'Hero name' })
@@ -16,4 +16,25 @@ export class CreateHeroDto {
   @IsString()
   @IsOptional()
   imageUrl?: string;
+
+  @ApiProperty({ description: 'Initial strength points (1-5)', minimum: 1, maximum: 5 })
+  @IsNumber()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  strength: number;
+
+  @ApiProperty({ description: 'Initial dexterity points (1-5)', minimum: 1, maximum: 5 })
+  @IsNumber()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  dexterity: number;
+
+  @ApiProperty({ description: 'Initial intelligence points (1-5)', minimum: 1, maximum: 5 })
+  @IsNumber()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  intelligence: number;
 } 

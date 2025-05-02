@@ -8,12 +8,15 @@ interface Hero {
   id: string;
   name: string;
   level: number;
-  experience: number;
-  strength: number;
-  agility: number;
-  intelligence: number;
-  health: number;
-  mana: number;
+  attributes: {
+    strength: number;
+    dexterity: number;
+    intelligence: number;
+    baseHealth: number;
+    baseMana: number;
+    currentLife: number;
+    currentMana: number;
+  };
 }
 
 interface UserProfile {
@@ -22,18 +25,18 @@ interface UserProfile {
   nickname: string;
   avatarUrl: string;
   role: string;
-  hero?: Hero;
   updatedAt: string;
 }
 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [hero, setHero] = useState<Hero | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -41,17 +44,32 @@ export default function Profile() {
           return;
         }
 
-        const response = await fetch('http://localhost:3000/users/profile/me', {
+        // Fetch user profile
+        const profileResponse = await fetch('http://localhost:3000/users/profile/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setProfile(profileData);
         } else {
           setError('Failed to load profile');
+        }
+
+        // Fetch active hero
+        const heroResponse = await fetch('http://localhost:3000/heroes/active', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (heroResponse.ok) {
+          const heroData = await heroResponse.json();
+          setHero(heroData);
+        } else if (heroResponse.status !== 404) {
+          setError('Failed to load hero information');
         }
       } catch (err) {
         setError('An error occurred while loading your profile');
@@ -60,7 +78,7 @@ export default function Profile() {
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, [router]);
 
   const formatDate = (dateString: string) => {
@@ -147,37 +165,33 @@ export default function Profile() {
 
               {/* Hero Information */}
               <div className="bg-gray-700 p-4 rounded-lg">
-                <h4 className="text-lg font-medium text-white mb-4">Hero Information</h4>
-                {profile?.hero ? (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400">Hero Name</label>
-                      <div className="mt-1 text-white">{profile.hero.name}</div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400">Level</label>
-                      <div className="mt-1 text-white">{profile.hero.level}</div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400">Experience</label>
-                      <div className="mt-1 text-white">{profile.hero.experience}</div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400">Strength</label>
-                        <div className="mt-1 text-white">{profile.hero.strength}</div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400">Agility</label>
-                        <div className="mt-1 text-white">{profile.hero.agility}</div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400">Intelligence</label>
-                        <div className="mt-1 text-white">{profile.hero.intelligence}</div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400">Health</label>
-                        <div className="mt-1 text-white">{profile.hero.health}</div>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-medium text-white">Hero Information</h4>
+                  {hero && (
+                    <button
+                      onClick={() => router.push('/hero')}
+                      className="text-sm text-indigo-400 hover:text-indigo-300"
+                    >
+                      View Hero Details →
+                    </button>
+                  )}
+                </div>
+                {hero ? (
+                  <div className="space-y-4">
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h5 className="text-lg font-medium text-white">{hero.name}</h5>
+                          <p className="text-sm text-gray-400">Level {hero.level}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-400">
+                            Health: {hero.attributes.currentLife}/{hero.attributes.baseHealth}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Mana: {hero.attributes.currentMana}/{hero.attributes.baseMana}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>

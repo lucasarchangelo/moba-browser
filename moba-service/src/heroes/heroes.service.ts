@@ -8,24 +8,16 @@ import { HeroResponseDto } from './dto/hero-response.dto';
 import { User } from '../database/entity/user.entity';
 import { Season } from '../database/entity/season.entity';
 import { DistributePointsDto } from './dto/distribute-points.dto';
+import { ActiveHeroDto } from './dto/active-hero.dto';
+import { SeasonsService } from '../seasons/seasons.service';
 
 @Injectable()
 export class HeroesService {
   constructor(
     @InjectRepository(Hero)
     private readonly heroRepository: Repository<Hero>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Season)
-    private readonly seasonRepository: Repository<Season>,
+    private readonly seasonsService: SeasonsService,
   ) {}
-
-  private readonly DEFAULT_VALUES = {
-    level: 1,
-    strength: 0,
-    dexterity: 0,
-    intelligence: 0,
-  };
 
   private calculateBaseHealth(level: number, strength: number): number {
     return (10 * level) + Math.floor(strength / 5);
@@ -73,14 +65,36 @@ export class HeroesService {
   }
 
   async create(createHeroDto: CreateHeroDto, userId: string, seasonId: string) {
+    // Create hero with default values
+    
     const hero = this.heroRepository.create({
-      ...createHeroDto,
-      ...this.DEFAULT_VALUES,
+      name: createHeroDto.name,
+      description: createHeroDto.description || '',
+      level: 1,
+      strength: 0,
+      dexterity: 0,
+      intelligence: 0,
+      currentLife: 0,
+      currentMana: 0,
       userId,
       seasonId,
     });
 
-    return this.heroRepository.save(hero);
+    // Save the hero first to get the ID
+    const savedHero = await this.heroRepository.save(hero);
+
+    // Distribute initial points
+    const distributePointsDto = {
+      strength: createHeroDto.strength,
+      dexterity: createHeroDto.dexterity,
+      intelligence: createHeroDto.intelligence,
+    };
+
+    // Use distributePoints to set initial attributes
+    await this.distributePoints(savedHero.id, distributePointsDto, userId);
+
+    // Return the updated hero
+    return this.findOne(savedHero.id);
   }
 
   async findAll() {
@@ -126,7 +140,7 @@ export class HeroesService {
                        distributePointsDto.intelligence;
 
     // Calculate available points (5 points per level)
-    const availablePoints = (hero.level - 1) * 5;
+    const availablePoints = hero.level * 5;
     const usedPoints = hero.strength + hero.dexterity + hero.intelligence;
 
     if (totalPoints > (availablePoints - usedPoints)) {
@@ -167,6 +181,33 @@ export class HeroesService {
       seasonId: hero.seasonId,
       createdAt: hero.createdAt,
       updatedAt: hero.updatedAt,
+    };
+  }
+
+  async findActiveHero(userId: string): Promise<ActiveHeroDto> {
+    // Find the active season
+    const activeSeason = await this.seasonsService.findActiveSeason();
+    if (!activeSeason) {
+      throw new NotFoundException('No active season found');
+    }
+
+    // Find the hero for this user in the active season
+    const hero = await this.heroRepository.findOne({
+      where: {
+        userId,
+        seasonId: activeSeason.id,
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('No active hero found for the current season');
+    }
+
+    // Convert to DTO and add isActive flag
+    const heroDto = this.mapToResponseDto(hero);
+    return {
+      ...heroDto,
+      isActive: true,
     };
   }
 } 

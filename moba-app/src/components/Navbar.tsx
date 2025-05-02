@@ -43,10 +43,10 @@ export default function Navbar() {
                   Profile
                 </Link>
                 <Link
-                  href="/hero/create"
+                  href="/hero"
                   className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Create Hero
+                  My Hero
                 </Link>
                 <Link
                   href="/battle"
@@ -144,11 +144,11 @@ export default function Navbar() {
             Profile
           </Link>
           <Link
-            href="/hero/create"
+            href="/hero"
             className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Create Hero
+            My Hero
           </Link>
           <Link
             href="/battle"

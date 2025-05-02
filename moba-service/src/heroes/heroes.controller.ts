@@ -8,6 +8,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from 'src/database/enums/user-role.enum';
 import { SeasonsService } from '../seasons/seasons.service';
 import { DistributePointsDto } from './dto/distribute-points.dto';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ActiveHeroDto } from './dto/active-hero.dto';
 
 @Controller('heroes')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,10 +29,10 @@ export class HeroesController {
     if (!activeSeason) {
       throw new Error('No active season found');
     }
-    
+
     return this.heroesService.create(
       createHeroDto,
-      req.user.id,
+      req.user.userId,
       activeSeason.id,
     );
   }
@@ -39,6 +41,15 @@ export class HeroesController {
   @Roles(UserRole.ADMIN)
   findAll() {
     return this.heroesService.findAll();
+  }
+
+  @Get('active')
+  @Roles(UserRole.USER)
+  @ApiOperation({ summary: 'Get active hero for current user in active season' })
+  @ApiResponse({ status: 200, description: 'Returns the active hero', type: ActiveHeroDto })
+  @ApiResponse({ status: 404, description: 'No active hero found' })
+  async findActiveHero(@Req() req: any) {
+    return this.heroesService.findActiveHero(req.user.userId);
   }
 
   @Get(':id')
@@ -54,7 +65,7 @@ export class HeroesController {
     @Body() updateHeroDto: UpdateHeroDto,
     @Req() req: any,
   ) {
-    return this.heroesService.update(id, updateHeroDto, req.user.id);
+    return this.heroesService.update(id, updateHeroDto, req.user.userId);
   }
 
   @Delete(':id')
@@ -70,6 +81,6 @@ export class HeroesController {
     @Body() distributePointsDto: DistributePointsDto,
     @Req() req: any,
   ) {
-    return this.heroesService.distributePoints(id, distributePointsDto, req.user.id);
+    return this.heroesService.distributePoints(id, distributePointsDto, req.user.userId);
   }
 } 

@@ -30,24 +30,24 @@ export class Hero {
   @Column({ default: 0 })
   intelligence: number;
 
-  @Column({ default: 0 })
+  @Column({ name: 'current_life', default: 0 })
   currentLife: number;
 
-  @Column({ default: 0 })
+  @Column({ name: 'current_mana', default: 0 })
   currentMana: number;
 
   @ManyToOne(() => User, user => user.heroes)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ nullable: false })
+  @Column({ name: 'user_id', nullable: false })
   userId: string;
 
   @ManyToOne(() => Season, season => season.heroes)
-  @JoinColumn({ name: 'seasonId' })
+  @JoinColumn({ name: 'season_id' })
   season: Season;
 
-  @Column({ nullable: false })
+  @Column({ name: 'season_id', nullable: false })
   seasonId: string;
 
   @OneToMany(() => HeroSkill, heroSkill => heroSkill.hero)
@@ -59,9 +59,9 @@ export class Hero {
   @OneToMany(() => EquippedItem, equippedItem => equippedItem.hero)
   equippedItems: EquippedItem[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 } 
