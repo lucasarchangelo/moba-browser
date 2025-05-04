@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
@@ -16,6 +17,9 @@ import { ItemResponseDto } from './dto/item-response.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../database/enums/user-role.enum';
+import { Item } from '../database/entity/item.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @ApiTags('items')
 @Controller('items')
@@ -53,8 +57,8 @@ export class ItemsController {
     description: 'Return all items.',
     type: [ItemResponseDto] 
   })
-  findAll(): Promise<ItemResponseDto[]> {
-    return this.itemsService.findAll();
+  async findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedResponseDto<Item>> {
+    return this.itemsService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -71,7 +75,7 @@ export class ItemsController {
     status: HttpStatus.NOT_FOUND, 
     description: 'Item not found.' 
   })
-  findOne(@Param('id') id: string): Promise<ItemResponseDto> {
+  async findOne(@Param('id') id: string): Promise<Item> {
     return this.itemsService.findOne(id);
   }
 

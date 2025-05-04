@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -6,6 +6,9 @@ import { UpdateSkillDto } from './dto/update-skill.dto';
 import { SkillResponseDto } from './dto/skill-response.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/database/enums/user-role.enum';
+import { Skill } from '../database/entity/skill.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @ApiTags('skills')
 @Controller('skills')
@@ -44,8 +47,8 @@ export class SkillsController {
     description: 'Return all skills.', 
     type: [SkillResponseDto] 
   })
-  findAll(): Promise<SkillResponseDto[]> {
-    return this.skillsService.findAll();
+  async findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedResponseDto<Skill>> {
+    return this.skillsService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -62,7 +65,7 @@ export class SkillsController {
     status: HttpStatus.NOT_FOUND, 
     description: 'Item not found.' 
   })
-  findOne(@Param('id') id: string): Promise<SkillResponseDto> {
+  async findOne(@Param('id') id: string): Promise<Skill> {
     return this.skillsService.findOne(id);
   }
 

@@ -42,6 +42,16 @@ interface ItemFormData {
   effects: Record<string, any>;
 }
 
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function ItemsSection() {
   const { user } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
@@ -49,6 +59,10 @@ export default function ItemsSection() {
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
   const [formData, setFormData] = useState<ItemFormData>({
     name: '',
     description: '',
@@ -67,10 +81,10 @@ export default function ItemsSection() {
   });
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    fetchItems(currentPage);
+  }, [currentPage]);
 
-  const fetchItems = async () => {
+  const fetchItems = async (page: number = 1) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -78,14 +92,16 @@ export default function ItemsSection() {
         return;
       }
       
-      const response = await fetch('http://localhost:3000/items', {
+      const response = await fetch(`http://localhost:3000/items?page=${page}&limit=${itemsPerPage}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
       if (response.ok) {
-        const data = await response.json();
-        setItems(data);
+        const data: PaginatedResponse<Item> = await response.json();
+        setItems(data.data);
+        setTotalPages(data.meta.totalPages);
+        setTotalItems(data.meta.total);
       } else {
         setError('Failed to fetch items');
       }
@@ -126,7 +142,7 @@ export default function ItemsSection() {
         setIsModalOpen(false);
         setEditingItem(null);
         resetForm();
-        fetchItems();
+        fetchItems(currentPage);
       } else {
         const data = await response.json();
         setError(data.message || 'Failed to save item');
@@ -156,7 +172,7 @@ export default function ItemsSection() {
       });
 
       if (response.ok) {
-        fetchItems();
+        fetchItems(currentPage);
       } else {
         setError('Failed to delete item');
       }
@@ -312,6 +328,32 @@ export default function ItemsSection() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-gray-400">
+          Showing {items.length} of {totalItems} items
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="px-4 py-2 bg-gray-700 text-white rounded-md">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Create/Edit Modal */}

@@ -36,6 +36,16 @@ interface SkillFormData {
   effects: Record<string, any>;
 }
 
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function SkillsSection() {
   const { user } = useAuth();
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -43,6 +53,10 @@ export default function SkillsSection() {
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSkills, setTotalSkills] = useState(0);
+  const skillsPerPage = 10;
   const [formData, setFormData] = useState<SkillFormData>({
     name: '',
     description: '',
@@ -58,10 +72,10 @@ export default function SkillsSection() {
   });
 
   useEffect(() => {
-    fetchSkills();
-  }, []);
+    fetchSkills(currentPage);
+  }, [currentPage]);
 
-  const fetchSkills = async () => {
+  const fetchSkills = async (page: number = 1) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -69,14 +83,16 @@ export default function SkillsSection() {
         return;
       }
       
-      const response = await fetch('http://localhost:3000/skills', {
+      const response = await fetch(`http://localhost:3000/skills?page=${page}&limit=${skillsPerPage}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
       if (response.ok) {
-        const data = await response.json();
-        setSkills(data);
+        const data: PaginatedResponse<Skill> = await response.json();
+        setSkills(data.data);
+        setTotalPages(data.meta.totalPages);
+        setTotalSkills(data.meta.total);
       } else {
         setError('Failed to fetch skills');
       }
@@ -117,7 +133,7 @@ export default function SkillsSection() {
         setIsModalOpen(false);
         setEditingSkill(null);
         resetForm();
-        fetchSkills();
+        fetchSkills(currentPage);
       } else {
         const data = await response.json();
         setError(data.message || 'Failed to save skill');
@@ -147,7 +163,7 @@ export default function SkillsSection() {
       });
 
       if (response.ok) {
-        fetchSkills();
+        fetchSkills(currentPage);
       } else {
         setError('Failed to delete skill');
       }
@@ -304,6 +320,32 @@ export default function SkillsSection() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-gray-400">
+          Showing {skills.length} of {totalSkills} skills
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="px-4 py-2 bg-gray-700 text-white rounded-md">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Create/Edit Modal */}

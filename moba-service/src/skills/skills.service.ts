@@ -5,6 +5,8 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from '../database/entity/skill.entity';
 import { SkillResponseDto } from './dto/skill-response.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class SkillsService {
@@ -21,8 +23,16 @@ export class SkillsService {
     return this.skillRepository.save(skill);
   }
 
-  async findAll(): Promise<Skill[]> {
-    return this.skillRepository.find();
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Skill>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [skills, total] = await this.skillRepository.findAndCount({
+      skip,
+      take: limit,
+    });
+
+    return new PaginatedResponseDto(skills, total, page, limit);
   }
 
   async findOne(id: string): Promise<Skill> {

@@ -7,6 +7,8 @@ import { UpdateItemDto } from './dto/update-item.dto';
 import { ItemResponseDto } from './dto/item-response.dto';
 import { ILogger } from '../core/logger/logger.interface';
 import { Inject } from '@nestjs/common';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 
 @Injectable()
 export class ItemsService {
@@ -31,13 +33,16 @@ export class ItemsService {
     return savedItem;
   }
 
-  async findAll(): Promise<Item[]> {
-    this.logger.debug('Fetching all items', this.serviceName);
-    
-    const items = await this.itemRepository.find();
-    
-    this.logger.info(`Retrieved ${items.length} items`, this.serviceName);
-    return items;
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Item>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await this.itemRepository.findAndCount({
+      skip,
+      take: limit,
+    });
+
+    return new PaginatedResponseDto(items, total, page, limit);
   }
 
   async findOne(id: string): Promise<Item> {
