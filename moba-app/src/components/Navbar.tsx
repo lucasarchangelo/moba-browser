@@ -49,6 +49,12 @@ export default function Navbar() {
                   My Hero
                 </Link>
                 <Link
+                  href="/store"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Store
+                </Link>
+                <Link
                   href="/battle"
                   className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                 >
@@ -149,6 +155,13 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
           >
             My Hero
+          </Link>
+          <Link
+            href="/store"
+            className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Store
           </Link>
           <Link
             href="/battle"

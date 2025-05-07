@@ -14,7 +14,7 @@ import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import { ItemResponseDto } from './dto/item-response.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../database/enums/user-role.enum';
 import { Item } from '../database/entity/item.entity';
@@ -55,10 +55,19 @@ export class ItemsController {
   @ApiResponse({ 
     status: HttpStatus.OK, 
     description: 'Return all items.',
-    type: [ItemResponseDto] 
+    type: PaginatedResponseDto<ItemResponseDto>
   })
-  async findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedResponseDto<Item>> {
-    return this.itemsService.findAll(paginationDto);
+  @ApiQuery({ 
+    name: 'slotType', 
+    required: false, 
+    description: 'Filter items by slot type',
+    enum: ['HEAD', 'CHEST', 'HANDS', 'LEGS', 'FEET', 'WEAPON', 'ACCESSORY']
+  })
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query('slotType') slotType?: string,
+  ): Promise<PaginatedResponseDto<ItemResponseDto>> {
+    return this.itemsService.findAll(paginationDto, slotType);
   }
 
   @Get(':id')
@@ -75,7 +84,7 @@ export class ItemsController {
     status: HttpStatus.NOT_FOUND, 
     description: 'Item not found.' 
   })
-  async findOne(@Param('id') id: string): Promise<Item> {
+  async findOne(@Param('id') id: string): Promise<ItemResponseDto> {
     return this.itemsService.findOne(id);
   }
 

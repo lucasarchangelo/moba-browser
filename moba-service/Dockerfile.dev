@@ -1,25 +1,18 @@
-# Etapa base com pnpm ativado
-FROM node:slim AS base
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Etapa de dependências (inclui devDependencies)
-FROM base AS deps
-
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
-
 # Use a slim Node.js image
-FROM base AS build
+FROM node:20-slim
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@10.10.0 --activate
 
 WORKDIR /app
-COPY . .
-COPY --from=deps /app/node_modules ./node_modules
 
 # Install required packages
 RUN apt-get update && \
-    apt-get install -y curl procps python3 make g++ gcc && \
+    apt-get install -y curl procps && \
     rm -rf /var/lib/apt/lists/*
+
+# Copy package files and install dependencies
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 CMD ["pnpm", "run", "start:dev"]

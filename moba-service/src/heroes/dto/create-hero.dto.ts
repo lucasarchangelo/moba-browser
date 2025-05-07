@@ -20,21 +20,21 @@ export class CreateHeroDto {
   @ApiProperty({ description: 'Initial strength points (1-5)', minimum: 1, maximum: 5 })
   @IsNumber()
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(5)
   strength: number;
 
   @ApiProperty({ description: 'Initial dexterity points (1-5)', minimum: 1, maximum: 5 })
   @IsNumber()
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(5)
   dexterity: number;
 
   @ApiProperty({ description: 'Initial intelligence points (1-5)', minimum: 1, maximum: 5 })
   @IsNumber()
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(5)
   intelligence: number;
 } 

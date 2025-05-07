@@ -20,7 +20,7 @@ export class ItemsService {
     @Inject(ILogger) private readonly logger: ILogger,
   ) {}
 
-  async create(createItemDto: CreateItemDto): Promise<Item> {
+  async create(createItemDto: CreateItemDto): Promise<ItemResponseDto> {
     this.logger.debug(`Creating new item with name: ${createItemDto.name}`, this.serviceName);
     
     const item = this.itemRepository.create({
@@ -30,22 +30,29 @@ export class ItemsService {
     const savedItem = await this.itemRepository.save(item);
     
     this.logger.info(`Item created successfully with ID: ${savedItem.id}`, this.serviceName);
-    return savedItem;
+    return this.mapToResponseDto(savedItem);
   }
 
-  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Item>> {
+  async findAll(paginationDto: PaginationDto, slotType?: string): Promise<PaginatedResponseDto<ItemResponseDto>> {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const [items, total] = await this.itemRepository.findAndCount({
-      skip,
-      take: limit,
-    });
+    const queryBuilder = this.itemRepository.createQueryBuilder('item');
 
-    return new PaginatedResponseDto(items, total, page, limit);
+    if (slotType) {
+      queryBuilder.where('item.slotType = :slotType', { slotType });
+    }
+
+    const [items, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    const itemsDto = items.map(item => this.mapToResponseDto(item));
+    return new PaginatedResponseDto(itemsDto, total, page, limit);
   }
 
-  async findOne(id: string): Promise<Item> {
+  async findOne(id: string): Promise<ItemResponseDto> {
     this.logger.debug(`Finding item with ID: ${id}`, this.serviceName);
     
     const item = await this.itemRepository.findOne({ where: { id } });
@@ -55,10 +62,10 @@ export class ItemsService {
     }
     
     this.logger.debug(`Item found with ID: ${id}`, this.serviceName);
-    return item;
+    return this.mapToResponseDto(item);
   }
 
-  async update(id: string, updateItemDto: UpdateItemDto): Promise<Item> {
+  async update(id: string, updateItemDto: UpdateItemDto): Promise<ItemResponseDto> {
     this.logger.debug(`Updating item with ID: ${id}`, this.serviceName);
     
     const item = await this.findOne(id);
@@ -84,17 +91,17 @@ export class ItemsService {
     const updatedItem = await this.itemRepository.save(item);
     
     this.logger.info(`Item updated successfully with ID: ${id}`, this.serviceName);
-    return updatedItem;
+    return this.mapToResponseDto(updatedItem);
   }
 
-  async remove(id: string): Promise<Item> {
+  async remove(id: string): Promise<ItemResponseDto> {
     this.logger.debug(`Attempting to remove item with ID: ${id}`, this.serviceName);
     
     const item = await this.findOne(id);
     const result = await this.itemRepository.remove(item);
     
     this.logger.info(`Item removed successfully with ID: ${id}`, this.serviceName);
-    return result;
+    return this.mapToResponseDto(result);
   }
 
   private mapToResponseDto(item: Item): ItemResponseDto {

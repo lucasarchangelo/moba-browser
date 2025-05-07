@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 
-interface Item {
+interface ItemResponseDto {
   id: string;
   name: string;
   description: string;
@@ -54,11 +54,11 @@ interface PaginatedResponse<T> {
 
 export default function ItemsSection() {
   const { user } = useAuth();
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<ItemResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [editingItem, setEditingItem] = useState<ItemResponseDto | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -98,7 +98,7 @@ export default function ItemsSection() {
         },
       });
       if (response.ok) {
-        const data: PaginatedResponse<Item> = await response.json();
+        const data: PaginatedResponse<ItemResponseDto> = await response.json();
         setItems(data.data);
         setTotalPages(data.meta.totalPages);
         setTotalItems(data.meta.total);
@@ -181,7 +181,7 @@ export default function ItemsSection() {
     }
   };
 
-  const handleEdit = (item: Item) => {
+  const handleEdit = (item: ItemResponseDto) => {
     setEditingItem(item);
     setFormData({
       name: item.name,

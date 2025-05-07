@@ -64,7 +64,7 @@ export class HeroesService {
     };
   }
 
-  async create(createHeroDto: CreateHeroDto, userId: string, seasonId: string) {
+  async create(createHeroDto: CreateHeroDto, userId: string, seasonId: string): Promise<HeroResponseDto> {
     // Create hero with default values
     const hero = this.heroRepository.create({
       name: createHeroDto.name,
@@ -75,7 +75,7 @@ export class HeroesService {
       intelligence: 0,
       currentLife: 0,
       currentMana: 0,
-      money: 100, // Set initial money
+      money: 100,
       userId,
       seasonId,
     });
@@ -97,19 +97,20 @@ export class HeroesService {
     return this.findOne(savedHero.id);
   }
 
-  async findAll() {
-    return this.heroRepository.find();
+  async findAll(): Promise<HeroResponseDto[]> {
+    const heroes = await this.heroRepository.find();
+    return heroes.map(hero => this.mapToResponseDto(hero));
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<HeroResponseDto> {
     const hero = await this.heroRepository.findOne({ where: { id } });
     if (!hero) {
       throw new NotFoundException(`Hero with ID ${id} not found`);
     }
-    return hero;
+    return this.mapToResponseDto(hero);
   }
 
-  async update(id: string, updateHeroDto: UpdateHeroDto, userId: string) {
+  async update(id: string, updateHeroDto: UpdateHeroDto, userId: string): Promise<HeroResponseDto> {
     const hero = await this.findOne(id);
     
     // Check if user is the owner of the hero
@@ -117,17 +118,29 @@ export class HeroesService {
       throw new ForbiddenException('You can only update your own heroes');
     }
 
-    Object.assign(hero, updateHeroDto);
-    return this.heroRepository.save(hero);
+    const updatedHero = await this.heroRepository.findOne({ where: { id } });
+    if (!updatedHero) {
+      throw new NotFoundException(`Hero with ID ${id} not found`);
+    }
+
+    Object.assign(updatedHero, updateHeroDto);
+    const savedHero = await this.heroRepository.save(updatedHero);
+    return this.mapToResponseDto(savedHero);
   }
 
-  async remove(id: string) {
-    const hero = await this.findOne(id);
-    return this.heroRepository.remove(hero);
+  async remove(id: string): Promise<void> {
+    const hero = await this.heroRepository.findOne({ where: { id } });
+    if (!hero) {
+      throw new NotFoundException(`Hero with ID ${id} not found`);
+    }
+    await this.heroRepository.remove(hero);
   }
 
-  async distributePoints(id: string, distributePointsDto: DistributePointsDto, userId: string) {
-    const hero = await this.findOne(id);
+  async distributePoints(id: string, distributePointsDto: DistributePointsDto, userId: string): Promise<HeroResponseDto> {
+    const hero = await this.heroRepository.findOne({ where: { id } });
+    if (!hero) {
+      throw new NotFoundException(`Hero with ID ${id} not found`);
+    }
     
     // Check if user is the owner of the hero
     if (hero.userId !== userId) {
@@ -152,7 +165,8 @@ export class HeroesService {
     hero.dexterity += distributePointsDto.dexterity;
     hero.intelligence += distributePointsDto.intelligence;
 
-    return this.heroRepository.save(hero);
+    const savedHero = await this.heroRepository.save(hero);
+    return this.mapToResponseDto(savedHero);
   }
 
   private mapToResponseDto(hero: Hero): HeroResponseDto {

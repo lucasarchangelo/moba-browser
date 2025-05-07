@@ -1,20 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsUUID } from 'class-validator';
+import { IsArray, IsString, IsNumber, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class PurchaseItemDto {
-  @ApiProperty({
-    description: 'The ID of the item to purchase',
-    example: '123e4567-e89b-12d3-a456-426614174000'
-  })
-  @IsUUID()
+export class PurchaseItemEntryDto {
+  @ApiProperty({ description: 'ID of the item to purchase' })
+  @IsString()
   itemId: string;
 
-  @ApiProperty({
-    description: 'The quantity of items to purchase (max 5 for consumables)',
-    example: 1,
-    minimum: 1,
-    maximum: 5
-  })
+  @ApiProperty({ description: 'Quantity of the item to purchase', minimum: 1 })
   @IsNumber()
+  @Min(1)
   quantity: number;
+}
+
+export class PurchaseItemDto {
+  @ApiProperty({ 
+    description: 'Array of items to purchase',
+    type: [PurchaseItemEntryDto]
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PurchaseItemEntryDto)
+  items: PurchaseItemEntryDto[];
 } 

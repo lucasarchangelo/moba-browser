@@ -110,7 +110,7 @@ export default function CreateHero() {
       ...prev,
       [name]: name === 'name' || name === 'description' 
         ? value 
-        : Math.max(1, Math.min(10, parseInt(value) || 0)),
+        : Math.max(0, Math.min(10, parseInt(value) || 0)),
     }));
   };
 
@@ -180,7 +180,7 @@ export default function CreateHero() {
               <div className="space-y-4">
                 <h4 className="text-lg font-medium text-white">Attributes</h4>
                 <p className="text-sm text-gray-400">
-                  Distribute points between strength, dexterity, and intelligence (1-10 each)
+                  Distribute points between strength, dexterity, and intelligence (0-10 each)
                 </p>
 
                 {/* Strength */}
@@ -192,7 +192,7 @@ export default function CreateHero() {
                     type="number"
                     name="strength"
                     id="strength"
-                    min="1"
+                    min="0"
                     max="10"
                     value={formData.strength}
                     onChange={handleChange}
@@ -209,7 +209,7 @@ export default function CreateHero() {
                     type="number"
                     name="dexterity"
                     id="dexterity"
-                    min="1"
+                    min="0"
                     max="10"
                     value={formData.dexterity}
                     onChange={handleChange}
@@ -226,7 +226,7 @@ export default function CreateHero() {
                     type="number"
                     name="intelligence"
                     id="intelligence"
-                    min="1"
+                    min="0"
                     max="10"
                     value={formData.intelligence}
                     onChange={handleChange}

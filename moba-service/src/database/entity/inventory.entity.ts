@@ -8,25 +8,25 @@ export class Inventory {
   id: string;
 
   @ManyToOne(() => Hero, hero => hero.inventory)
-  @JoinColumn({ name: 'heroId' })
+  @JoinColumn({ name: 'hero_id' })
   hero: Hero;
 
-  @Column()
+  @Column({ name: 'hero_id' })
   heroId: string;
 
   @ManyToOne(() => Item)
-  @JoinColumn({ name: 'itemId' })
+  @JoinColumn({ name: 'item_id' })
   item: Item;
 
-  @Column()
+  @Column({ name: 'item_id' })
   itemId: string;
 
   @Column({ default: 1 })
   quantity: number;
 
-  @Column()
+  @Column({ name: 'acquired_at' })
   acquiredAt: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 } 
