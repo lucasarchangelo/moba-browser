@@ -2,7 +2,6 @@ import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, Up
 import { HeroSkill } from './hero-skill.entity';
 import { Inventory } from './inventory.entity';
 import { EquippedItem } from './equipped-item.entity';
-import { HeroType } from '../enums/hero-type.enum';
 import { User } from './user.entity';
 import { Season } from './season.entity';
 
@@ -35,6 +34,9 @@ export class Hero {
 
   @Column({ name: 'current_mana', default: 0 })
   currentMana: number;
+
+  @Column({ name: 'money', default: 100 })
+  money: number;
 
   @ManyToOne(() => User, user => user.heroes)
   @JoinColumn({ name: 'user_id' })

@@ -66,7 +66,6 @@ export class HeroesService {
 
   async create(createHeroDto: CreateHeroDto, userId: string, seasonId: string) {
     // Create hero with default values
-    
     const hero = this.heroRepository.create({
       name: createHeroDto.name,
       description: createHeroDto.description || '',
@@ -76,6 +75,7 @@ export class HeroesService {
       intelligence: 0,
       currentLife: 0,
       currentMana: 0,
+      money: 100, // Set initial money
       userId,
       seasonId,
     });
@@ -177,6 +177,7 @@ export class HeroesService {
         currentLife: derivedStats.currentLife,
         currentMana: derivedStats.currentMana,
       },
+      money: hero.money,
       userId: hero.userId,
       seasonId: hero.seasonId,
       createdAt: hero.createdAt,

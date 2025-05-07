@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS heroes (
   intelligence INTEGER DEFAULT 0,
   current_life INTEGER DEFAULT 0,
   current_mana INTEGER DEFAULT 0,
+  money INTEGER DEFAULT 100,
   user_id UUID NOT NULL REFERENCES users(id),
   season_id UUID NOT NULL REFERENCES seasons(id),
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
