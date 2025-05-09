@@ -7,6 +7,7 @@ import { Skill } from '../database/entity/skill.entity';
 import { SkillResponseDto } from './dto/skill-response.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { SkillFilterDto } from './dto/skill-filter.dto';
 
 @Injectable()
 export class SkillsService {
@@ -85,6 +86,60 @@ export class SkillsService {
       effects: skill.effects,
       createdAt: skill.createdAt,
       updatedAt: skill.updatedAt,
+    };
+  }
+
+  async getSkills(
+    paginationDto: PaginationDto,
+    filterDto?: SkillFilterDto
+  ): Promise<{ data: SkillResponseDto[]; meta: { total: number; page: number; limit: number; totalPages: number } }> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    // Create query builder for more complex filtering
+    const queryBuilder = this.skillRepository.createQueryBuilder('skill');
+
+    // Apply filters if they exist
+    if (filterDto) {
+      if (filterDto.maxRequiredStrength !== undefined) {
+        queryBuilder.andWhere('skill.requiredStrength <= :maxStrength', { 
+          maxStrength: filterDto.maxRequiredStrength 
+        });
+      }
+      if (filterDto.maxRequiredDexterity !== undefined) {
+        queryBuilder.andWhere('skill.requiredDexterity <= :maxDexterity', { 
+          maxDexterity: filterDto.maxRequiredDexterity 
+        });
+      }
+      if (filterDto.maxRequiredIntelligence !== undefined) {
+        queryBuilder.andWhere('skill.requiredIntelligence <= :maxIntelligence', { 
+          maxIntelligence: filterDto.maxRequiredIntelligence 
+        });
+      }
+    }
+
+    // Add pagination
+    queryBuilder
+      .skip(skip)
+      .take(limit)
+      .orderBy('skill.createdAt', 'DESC');
+
+    // Get total count for pagination
+    const total = await queryBuilder.getCount();
+
+    // Get the skills
+    const skills = await queryBuilder.getMany();
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: skills.map(skill => this.mapToResponseDto(skill)),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      }
     };
   }
 } 

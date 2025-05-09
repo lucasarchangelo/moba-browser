@@ -1,43 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inventory } from '../database/entity/inventory.entity';
-import { Hero } from '../database/entity/hero.entity';
-import { Season } from '../database/entity/season.entity';
 import { InventoryResponseDto, InventoryItemResponseDto } from './dto/inventory-response.dto';
+import { HeroesService } from '../heroes/heroes.service';
 
 @Injectable()
 export class InventoryService {
   constructor(
     @InjectRepository(Inventory)
     private readonly inventoryRepository: Repository<Inventory>,
-    @InjectRepository(Hero)
-    private readonly heroRepository: Repository<Hero>,
-    @InjectRepository(Season)
-    private readonly seasonRepository: Repository<Season>,
+    private readonly heroesService: HeroesService,
   ) {}
 
   async getHeroInventory(userId: string): Promise<InventoryResponseDto> {
-    // Get active season
-    const activeSeason = await this.seasonRepository.findOne({
-      where: { isActive: true }
-    });
-
-    if (!activeSeason) {
-      throw new NotFoundException('No active season found');
-    }
-
-    // Get hero for the user in current season
-    const hero = await this.heroRepository.findOne({
-      where: {
-        userId,
-        seasonId: activeSeason.id
-      }
-    });
-
-    if (!hero) {
-      throw new BadRequestException('You need an active hero in the current season to view inventory');
-    }
+    const { hero } = await this.heroesService.findActiveHero(userId);
 
     // Get all inventory items for the hero with item details
     const inventoryItems = await this.inventoryRepository.find({

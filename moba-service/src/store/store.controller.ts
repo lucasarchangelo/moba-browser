@@ -26,21 +26,24 @@ export class StoreController {
 
   @Post('purchase')
   @Roles(UserRole.USER)
-  @ApiOperation({ summary: 'Purchase multiple items from the store' })
+  @ApiOperation({ summary: 'Purchase items or skills from the store' })
   @ApiResponse({ 
     status: 200, 
     description: 'Items purchased successfully',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Items purchased successfully' },
-        remainingMoney: { type: 'number', example: 50 }
+        remainingMoney: {
+          type: 'number',
+          description: 'Remaining money after purchase'
+        }
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'Invalid purchase request, not enough money, or user already owns some items' })
-  @ApiResponse({ status: 404, description: 'One or more items not found or no active season' })
-  async purchaseItem(@Request() req, @Body() purchaseItemDto: PurchaseItemDto) {
-    return this.storeService.purchaseItem(req.user.id, purchaseItemDto);
+  async purchaseItems(
+    @Request() req,
+    @Body() purchaseItemDto: PurchaseItemDto
+  ): Promise<{ remainingMoney: number }> {
+    return this.storeService.purchaseItems(req.user.id, purchaseItemDto.items);
   }
 } 

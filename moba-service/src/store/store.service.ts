@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Item } from '../database/entity/item.entity';
 import { Inventory } from '../database/entity/inventory.entity';
+import { Skill } from '../database/entity/skill.entity';
+import { HeroSkill } from '../database/entity/hero-skill.entity';
+import { PurchaseItemEntryDto, PurchaseItemType } from './dto/purchase-item.dto';
+import { HeroesService } from '../heroes/heroes.service';
 import { Hero } from '../database/entity/hero.entity';
-import { Season } from '../database/entity/season.entity';
-import { PurchaseItemDto } from './dto/purchase-item.dto';
-import { In } from 'typeorm';
 
 @Injectable()
 export class StoreService {
@@ -15,138 +16,149 @@ export class StoreService {
     private readonly itemRepository: Repository<Item>,
     @InjectRepository(Inventory)
     private readonly inventoryRepository: Repository<Inventory>,
+    @InjectRepository(Skill)
+    private readonly skillRepository: Repository<Skill>,
+    @InjectRepository(HeroSkill)
+    private readonly heroSkillRepository: Repository<HeroSkill>,
     @InjectRepository(Hero)
     private readonly heroRepository: Repository<Hero>,
-    @InjectRepository(Season)
-    private readonly seasonRepository: Repository<Season>,
+    private readonly heroesService: HeroesService,
   ) {}
 
   async getAvailableItems(userId: string) {
-    // Get active season
-    const activeSeason = await this.seasonRepository.findOne({
-      where: { isActive: true }
-    });
+    const { hero: heroDto } = await this.heroesService.findActiveHero(userId);
+    const items = await this.itemRepository.find();
+    const skills = await this.skillRepository.find();
 
-    if (!activeSeason) {
-      throw new NotFoundException('No active season found');
-    }
-
-    // Check if user has an active hero in the current season
-    const activeHero = await this.heroRepository.findOne({
-      where: {
-        userId,
-        seasonId: activeSeason.id
-      }
-    });
-
-    if (!activeHero) {
-      throw new BadRequestException('You need an active hero in the current season to access the store');
-    }
-
-    // Return all available items
-    return this.itemRepository.find();
-  }
-
-  async purchaseItem(userId: string, purchaseItemDto: PurchaseItemDto) {
-    const { items } = purchaseItemDto;
-
-    // Get active season
-    const activeSeason = await this.seasonRepository.findOne({
-      where: { isActive: true }
-    });
-
-    if (!activeSeason) {
-      throw new NotFoundException('No active season found');
-    }
-
-    // Check if user has an active hero in the current season
-    const activeHero = await this.heroRepository.findOne({
-      where: {
-        userId,
-        seasonId: activeSeason.id
-      }
-    });
-
-    if (!activeHero) {
-      throw new BadRequestException('You need an active hero in the current season to purchase items');
-    }
-
-    // Get all items being purchased
-    const itemIds = items.map(item => item.itemId);
-    const storeItems = await this.itemRepository.findByIds(itemIds);
-
-    if (storeItems.length !== itemIds.length) {
-      throw new NotFoundException('One or more items not found');
-    }
-
-    // Calculate total cost and validate purchases
-    let totalCost = 0;
-    const existingInventories = await this.inventoryRepository.find({
-      where: {
-        heroId: activeHero.id,
-        itemId: In(itemIds)
-      }
-    });
-
-    // Create a map of existing inventories for quick lookup
-    const existingInventoryMap = new Map(
-      existingInventories.map(inv => [inv.itemId, inv])
+    // Filter out skills that the hero doesn't meet requirements for
+    const availableSkills = skills.filter(skill => 
+      heroDto.attributes.strength >= skill.requiredStrength &&
+      heroDto.attributes.dexterity >= skill.requiredDexterity &&
+      heroDto.attributes.intelligence >= skill.requiredIntelligence
     );
 
-    // Validate all purchases before processing
-    for (const purchase of items) {
-      const item = storeItems.find(i => i.id === purchase.itemId);
-      if (!item) continue;
+    return {
+      items,
+      skills: availableSkills
+    };
+  }
 
-      // Check if item is not consumable and user already has it
-      if (!item.isConsumable && existingInventoryMap.has(item.id)) {
-        throw new BadRequestException(`You already own the non-consumable item: ${item.name}`);
-      }
+  async purchaseItems(userId: string, items: PurchaseItemEntryDto[]): Promise<{ remainingMoney: number }> {
+    const { hero: heroDto } = await this.heroesService.findActiveHero(userId);
 
-      // Check consumable quantity limits
-      if (item.isConsumable) {
-        const existingQuantity = existingInventoryMap.get(item.id)?.quantity || 0;
-        const totalQuantity = existingQuantity + purchase.quantity;
-        if (totalQuantity > 5) {
-          throw new BadRequestException(`You cannot have more than 5 of the consumable item: ${item.name}`);
+    // Get the actual hero entity for updates
+    const hero = await this.heroRepository.findOne({
+      where: { id: heroDto.id }
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    // Calculate total cost
+    let totalCost = 0;
+    const itemsToPurchase: { item: Item; quantity: number }[] = [];
+    const skillsToPurchase: Skill[] = [];
+
+    for (const purchaseItem of items) {
+      if (purchaseItem.type === PurchaseItemType.ITEM) {
+        const item = await this.itemRepository.findOne({
+          where: { id: purchaseItem.itemId }
+        });
+
+        if (!item) {
+          throw new NotFoundException(`Item with ID ${purchaseItem.itemId} not found`);
         }
-      }
 
-      totalCost += item.price * purchase.quantity;
+        // Check if hero already has this item (non-consumable items only)
+        if (!item.isConsumable) {
+          const existingItem = await this.inventoryRepository.findOne({
+            where: {
+              hero: { id: hero.id },
+              item: { id: item.id }
+            }
+          });
+
+          if (existingItem) {
+            throw new BadRequestException(`You already have the item ${item.name}`);
+          }
+        }
+
+        totalCost += item.price * purchaseItem.quantity;
+        itemsToPurchase.push({ item, quantity: purchaseItem.quantity });
+      } else {
+        const skill = await this.skillRepository.findOne({
+          where: { id: purchaseItem.itemId }
+        });
+
+        if (!skill) {
+          throw new NotFoundException(`Skill with ID ${purchaseItem.itemId} not found`);
+        }
+
+        // Check if hero already has this skill
+        const existingSkill = await this.heroSkillRepository.findOne({
+          where: {
+            hero: { id: hero.id },
+            skill: { id: skill.id }
+          }
+        });
+
+        if (existingSkill) {
+          throw new BadRequestException(`You already have the skill ${skill.name}`);
+        }
+
+        // Validate skill requirements
+        if (heroDto.attributes.strength < skill.requiredStrength) {
+          throw new BadRequestException(
+            `You need ${skill.requiredStrength} Strength to learn ${skill.name} (you have ${heroDto.attributes.strength})`
+          );
+        }
+        if (heroDto.attributes.dexterity < skill.requiredDexterity) {
+          throw new BadRequestException(
+            `You need ${skill.requiredDexterity} Dexterity to learn ${skill.name} (you have ${heroDto.attributes.dexterity})`
+          );
+        }
+        if (heroDto.attributes.intelligence < skill.requiredIntelligence) {
+          throw new BadRequestException(
+            `You need ${skill.requiredIntelligence} Intelligence to learn ${skill.name} (you have ${heroDto.attributes.intelligence})`
+          );
+        }
+
+        totalCost += skill.price;
+        skillsToPurchase.push(skill);
+      }
     }
 
     // Check if hero has enough money
-    if (activeHero.money < totalCost) {
+    if (hero.money < totalCost) {
       throw new BadRequestException('Not enough money to purchase all items');
     }
 
-    // Process all purchases
-    for (const purchase of items) {
-      const item = storeItems.find(i => i.id === purchase.itemId);
-      if (!item) continue;
+    // Update hero's money
+    hero.money -= totalCost;
+    await this.heroRepository.save(hero);
 
-      const existingInventory = existingInventoryMap.get(item.id);
-
-      if (existingInventory) {
-        existingInventory.quantity += purchase.quantity;
-        await this.inventoryRepository.save(existingInventory);
-      } else {
-        const newInventory = this.inventoryRepository.create({
-          heroId: activeHero.id,
-          itemId: item.id,
-          quantity: purchase.quantity
-        });
-        await this.inventoryRepository.save(newInventory);
-      }
+    // Add items to inventory
+    for (const { item, quantity } of itemsToPurchase) {
+      const inventory = this.inventoryRepository.create({
+        hero,
+        item,
+        quantity,
+        acquiredAt: new Date()
+      });
+      await this.inventoryRepository.save(inventory);
     }
 
-    // Deduct total cost from hero
-    activeHero.money -= totalCost;
-    await this.heroRepository.save(activeHero);
+    // Add skills to hero
+    for (const skill of skillsToPurchase) {
+      const heroSkill = this.heroSkillRepository.create({
+        hero,
+        skill,
+        level: 1,
+      });
+      await this.heroSkillRepository.save(heroSkill);
+    }
 
-    return {
-      message: 'Items purchased successfully',
-      remainingMoney: activeHero.money
-    };
+    return { remainingMoney: hero.money };
   }
 } 

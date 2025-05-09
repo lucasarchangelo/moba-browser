@@ -9,6 +9,7 @@ import { User } from '../database/entity/user.entity';
 import { Season } from '../database/entity/season.entity';
 import { DistributePointsDto } from './dto/distribute-points.dto';
 import { ActiveHeroDto } from './dto/active-hero.dto';
+import { ActiveHeroWithSeasonDto } from './dto/active-hero-with-season.dto';
 import { SeasonsService } from '../seasons/seasons.service';
 
 @Injectable()
@@ -199,7 +200,7 @@ export class HeroesService {
     };
   }
 
-  async findActiveHero(userId: string): Promise<ActiveHeroDto> {
+  async findActiveHero(userId: string): Promise<ActiveHeroWithSeasonDto> {
     // Find the active season
     const activeSeason = await this.seasonsService.findActiveSeason();
     if (!activeSeason) {
@@ -218,11 +219,16 @@ export class HeroesService {
       throw new NotFoundException('No active hero found for the current season');
     }
 
-    // Convert to DTO and add isActive flag
+    // Convert to DTOs
     const heroDto = this.mapToResponseDto(hero);
-    return {
+    const activeHeroDto: ActiveHeroDto = {
       ...heroDto,
       isActive: true,
+    };
+
+    return {
+      hero: activeHeroDto,
+      season: activeSeason
     };
   }
 } 

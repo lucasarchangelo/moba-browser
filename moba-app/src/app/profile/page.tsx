@@ -67,7 +67,7 @@ export default function Profile() {
 
         if (heroResponse.ok) {
           const heroData = await heroResponse.json();
-          setHero(heroData);
+          setHero(heroData.hero);
         } else if (heroResponse.status !== 404) {
           setError('Failed to load hero information');
         }

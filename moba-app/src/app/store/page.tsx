@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import InventorySection from '@/components/store/InventorySection';
+import StoreGrid from '@/components/store/StoreGrid';
+import ShoppingCart from '@/components/store/ShoppingCart';
+import SkillFilters from '@/components/store/SkillFilters';
 
 interface ItemResponseDto {
   id: string;
@@ -26,6 +29,26 @@ interface ItemResponseDto {
   updatedAt: Date;
 }
 
+interface SkillResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  magicType: string;
+  baseDamage: number;
+  baseManaCost: number;
+  requiredStrength: number;
+  requiredDexterity: number;
+  requiredIntelligence: number;
+  price: number;
+  imageUrl: string;
+  effects: Record<string, any>;
+}
+
+interface StoreResponse {
+  items: ItemResponseDto[];
+  skills: SkillResponseDto[];
+}
+
 interface PaginatedResponse<T> {
   data: T[];
   meta: {
@@ -37,16 +60,25 @@ interface PaginatedResponse<T> {
 }
 
 interface InventoryItem {
-  id: string;
+  item: {
+    id: string;
+    name: string;
+  };
   quantity: number;
-  item: ItemResponseDto;
-  createdAt: Date;
-  acquiredAt: Date;
 }
 
-interface InventoryResponse {
-  heroId: string;
-  items: InventoryItem[];
+interface HeroData {
+  hero: {
+    id: string;
+    name: string;
+    money: number;
+    attributes: {
+      strength: number;
+      dexterity: number;
+      intelligence: number;
+    };
+    inventory?: InventoryItem[];
+  };
 }
 
 const SLOT_TYPES = [
@@ -60,22 +92,33 @@ const SLOT_TYPES = [
   { value: 'ACCESSORY', label: 'Accessory' },
 ] as const;
 
+interface SkillFilters {
+  maxRequiredStrength?: number;
+  maxRequiredDexterity?: number;
+  maxRequiredIntelligence?: number;
+}
+
 export default function StorePage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'items' | 'skills'>('items');
   const [items, setItems] = useState<ItemResponseDto[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [skills, setSkills] = useState<SkillResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedItems, setSelectedItems] = useState<{ item: ItemResponseDto; quantity: number }[]>([]);
+  const [selectedItems, setSelectedItems] = useState<{ item: ItemResponseDto | SkillResponseDto; quantity: number }[]>([]);
   const [heroMoney, setHeroMoney] = useState(0);
+  const [heroData, setHeroData] = useState<HeroData | null>(null);
   const [selectedSlotType, setSelectedSlotType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 8;
-  const [showInventory, setShowInventory] = useState(false);
-  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [skillFilters, setSkillFilters] = useState<SkillFilters>({
+    maxRequiredStrength: undefined,
+    maxRequiredDexterity: undefined,
+    maxRequiredIntelligence: undefined,
+  });
 
   const fetchStoreData = async () => {
     try {
@@ -86,15 +129,28 @@ export default function StorePage() {
         return;
       }
 
-      // Fetch store items
-      const url = new URL('http://localhost:3000/items');
-      if (selectedSlotType) {
+      const endpoint = activeTab === 'items' ? '/items' : '/skills';
+      const url = new URL(`http://localhost:3000${endpoint}`);
+      
+      if (activeTab === 'items' && selectedSlotType) {
         url.searchParams.append('slotType', selectedSlotType);
+      } else if (activeTab === 'skills') {
+        // Add skill filters to URL
+        if (skillFilters.maxRequiredStrength !== undefined) {
+          url.searchParams.append('maxRequiredStrength', skillFilters.maxRequiredStrength.toString());
+        }
+        if (skillFilters.maxRequiredDexterity !== undefined) {
+          url.searchParams.append('maxRequiredDexterity', skillFilters.maxRequiredDexterity.toString());
+        }
+        if (skillFilters.maxRequiredIntelligence !== undefined) {
+          url.searchParams.append('maxRequiredIntelligence', skillFilters.maxRequiredIntelligence.toString());
+        }
       }
+
       url.searchParams.append('page', currentPage.toString());
       url.searchParams.append('limit', itemsPerPage.toString());
 
-      const [itemsResponse, heroResponse] = await Promise.all([
+      const [storeResponse, heroResponse] = await Promise.all([
         fetch(url.toString(), {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -107,21 +163,26 @@ export default function StorePage() {
         })
       ]);
 
-      if (!itemsResponse.ok) {
-        throw new Error('Failed to fetch store items');
+      if (!storeResponse.ok) {
+        throw new Error(`Failed to fetch ${activeTab}`);
       }
 
       if (!heroResponse.ok) {
         throw new Error('Failed to fetch hero data');
       }
 
-      const itemsData: PaginatedResponse<ItemResponseDto> = await itemsResponse.json();
+      const storeData: PaginatedResponse<ItemResponseDto | SkillResponseDto> = await storeResponse.json();
       const heroData = await heroResponse.json();
 
-      setItems(itemsData.data);
-      setTotalPages(itemsData.meta.totalPages);
-      setTotalItems(itemsData.meta.total);
-      setHeroMoney(heroData.money || 0);
+      if (activeTab === 'items') {
+        setItems(storeData.data as ItemResponseDto[]);
+      } else {
+        setSkills(storeData.data as SkillResponseDto[]);
+      }
+      setTotalPages(storeData.meta.totalPages);
+      setTotalItems(storeData.meta.total);
+      setHeroMoney(heroData.hero.money || 0);
+      setHeroData(heroData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       toast.error(err instanceof Error ? err.message : 'An error occurred');
@@ -130,49 +191,40 @@ export default function StorePage() {
     }
   };
 
-  const fetchInventory = async () => {
-    try {
-      setInventoryLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/auth/signin');
-        return;
-      }
-
-      const response = await fetch('http://localhost:3000/inventory', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory');
-      }
-
-      const data: InventoryResponse = await response.json();
-      setInventory(data.items);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load inventory');
-    } finally {
-      setInventoryLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchStoreData();
-  }, [router, selectedSlotType, currentPage]);
+  }, [router, selectedSlotType, currentPage, activeTab, skillFilters]);
 
-  useEffect(() => {
-    if (showInventory) {
-      fetchInventory();
+  const handleAddToCart = (item: ItemResponseDto | SkillResponseDto) => {
+    // For skills, check if hero meets requirements
+    if ('requiredStrength' in item) {
+      const hero = heroData?.hero;
+      if (!hero) return;
+
+      if (hero.attributes.strength < item.requiredStrength ||
+          hero.attributes.dexterity < item.requiredDexterity ||
+          hero.attributes.intelligence < item.requiredIntelligence) {
+        toast.error(`You don't meet the requirements for ${item.name}`);
+        return;
+      }
+    } else {
+      // For items, check if hero already has it (non-consumable items only)
+      if (!item.isConsumable) {
+        const hero = heroData?.hero;
+        if (!hero) return;
+
+        const hasItem = hero.inventory?.some(invItem => invItem.item.id === item.id);
+        if (hasItem) {
+          toast.error(`You already have ${item.name}`);
+          return;
+        }
+      }
     }
-  }, [showInventory]);
 
-  const handleAddToCart = (item: ItemResponseDto) => {
     const existingItem = selectedItems.find(selected => selected.item.id === item.id);
     
     if (existingItem) {
-      if (item.isConsumable) {
+      if ('isConsumable' in item && item.isConsumable) {
         setSelectedItems(selectedItems.map(selected =>
           selected.item.id === item.id
             ? { ...selected, quantity: selected.quantity + 1 }
@@ -199,17 +251,13 @@ export default function StorePage() {
   const handleQuantityChange = (itemId: string, change: number) => {
     setSelectedItems(selectedItems.map(selected => {
       if (selected.item.id === itemId) {
-        if (selected.item.isConsumable) {
+        if ('isConsumable' in selected.item && selected.item.isConsumable) {
           const newQuantity = Math.max(1, selected.quantity + change);
           return { ...selected, quantity: newQuantity };
         }
       }
       return selected;
     }));
-  };
-
-  const calculateTotal = () => {
-    return selectedItems.reduce((total, { item, quantity }) => total + (item.price * quantity), 0);
   };
 
   const handlePurchase = async () => {
@@ -231,6 +279,7 @@ export default function StorePage() {
           items: selectedItems.map(({ item, quantity }) => ({
             itemId: item.id,
             quantity,
+            type: 'isConsumable' in item ? 'item' : 'skill',
           })),
         }),
       });
@@ -252,6 +301,11 @@ export default function StorePage() {
     } finally {
       setPurchasing(false);
     }
+  };
+
+  const handleSkillFilterChange = (filters: SkillFilters) => {
+    setSkillFilters(filters);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   if (loading) {
@@ -304,226 +358,93 @@ export default function StorePage() {
           </div>
         </div>
 
-        {/* Inventory Section - Full Width */}
-        <div className="bg-gray-800 shadow rounded-lg overflow-hidden mb-6">
-          <button
-            onClick={() => setShowInventory(!showInventory)}
-            className="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-700 transition-colors"
-          >
-            <h2 className="text-xl font-semibold text-white">Your Inventory</h2>
-            {showInventory ? (
-              <ChevronUpIcon className="h-6 w-6 text-white" />
-            ) : (
-              <ChevronDownIcon className="h-6 w-6 text-white" />
-            )}
-          </button>
-          
-          {showInventory && (
-            <div className="px-6 py-4 border-t border-gray-700">
-              {inventoryLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                  <span className="ml-3 text-white">Loading inventory...</span>
-                </div>
-              ) : inventory.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">Your inventory is empty</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {inventory.map(({ item, quantity }) => (
-                    <div key={item.id} className="bg-gray-700 rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-white font-medium">{item.name}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{item.description}</p>
-                          <p className="text-gray-400 text-sm mt-1">Slot: {item.slotType}</p>
-                        </div>
-                        {item.isConsumable && (
-                          <span className="text-white font-medium">x{quantity}</span>
-                        )}
-                      </div>
-                      <div className="mt-2">
-                        {Object.entries(item.effects).map(([stat, value]) => (
-                          <div key={stat} className="flex justify-between text-sm">
-                            <span className="text-gray-400">{stat}</span>
-                            <span className="text-white">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Inventory Section */}
+        <InventorySection type={activeTab} />
 
         {/* Store Items and Shopping Cart Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Store Items */}
+          {/* Store Items/Skills */}
           <div className="lg:col-span-2">
-            <div className="bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div className="bg-gray-800 shadow rounded-lg overflow-hidden mb-6">
               <div className="px-6 py-4 border-b border-gray-700">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-white">Available Items</h2>
-                  <select
-                    value={selectedSlotType}
-                    onChange={(e) => {
-                      setSelectedSlotType(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="bg-gray-700 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {SLOT_TYPES.map(({ value, label }) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium text-white">{item.name}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{item.description}</p>
-                          <p className="text-gray-400 text-sm mt-1">Slot: {item.slotType}</p>
-                        </div>
-                        <span className="text-yellow-400 font-medium">{item.price} gold</span>
-                      </div>
-                      <div className="mt-4">
-                        {Object.entries(item.effects).map(([stat, value]) => (
-                          <div key={stat} className="flex justify-between text-sm">
-                            <span className="text-gray-400">{stat}</span>
-                            <span className="text-white">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => handleAddToCart(item)}
-                        disabled={loading}
-                        className="mt-4 w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="mt-6 flex justify-between items-center">
-                  <div className="text-gray-400">
-                    Showing {items.length} of {totalItems} items
-                  </div>
-                  <div className="flex gap-2">
+                  <div className="flex space-x-4">
                     <button
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1 || loading}
-                      className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                      onClick={() => setActiveTab('items')}
+                      className={`px-4 py-2 rounded-md ${
+                        activeTab === 'items'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
                     >
-                      Previous
+                      Items
                     </button>
-                    <span className="px-4 py-2 bg-gray-700 text-white rounded-md">
-                      Page {currentPage} of {totalPages}
-                    </span>
                     <button
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages || loading}
-                      className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
+                      onClick={() => setActiveTab('skills')}
+                      className={`px-4 py-2 rounded-md ${
+                        activeTab === 'skills'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
                     >
-                      Next
+                      Skills
                     </button>
                   </div>
+                  {activeTab === 'items' && (
+                    <select
+                      value={selectedSlotType}
+                      onChange={(e) => {
+                        setSelectedSlotType(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="bg-gray-700 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {SLOT_TYPES.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
             </div>
+
+            {/* Skill Filters */}
+            {activeTab === 'skills' && heroData?.hero && (
+              <SkillFilters
+                onFilterChange={handleSkillFilterChange}
+                heroAttributes={heroData.hero.attributes}
+              />
+            )}
+
+            <StoreGrid
+              type={activeTab}
+              items={activeTab === 'items' ? items : skills}
+              onAddToCart={handleAddToCart}
+              loading={loading}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              onPageChange={setCurrentPage}
+            />
           </div>
 
           {/* Shopping Cart */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-800 shadow rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-700">
-                <h2 className="text-xl font-semibold text-white">Shopping Cart</h2>
-              </div>
-              <div className="p-6">
-                {selectedItems.length === 0 ? (
-                  <p className="text-gray-400 text-center">Your cart is empty</p>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedItems.map(({ item, quantity }) => (
-                      <div key={item.id} className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="text-white font-medium">{item.name}</h3>
-                            <p className="text-yellow-400 text-sm">{item.price} gold each</p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveFromCart(item.id)}
-                            disabled={purchasing}
-                            className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        <div className="mt-2 flex items-center justify-between">
-                          {item.isConsumable ? (
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleQuantityChange(item.id, -1)}
-                                disabled={purchasing}
-                                className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                -
-                              </button>
-                              <span className="text-white">{quantity}</span>
-                              <button
-                                onClick={() => handleQuantityChange(item.id, 1)}
-                                disabled={purchasing}
-                                className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                +
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">Equipment (1)</span>
-                          )}
-                          <span className="text-white">
-                            Total: {item.price * quantity} gold
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="border-t border-gray-700 pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-gray-400">Total Cost:</span>
-                        <span className="text-2xl font-bold text-yellow-400">
-                          {calculateTotal()} gold
-                        </span>
-                      </div>
-                      <button
-                        onClick={handlePurchase}
-                        disabled={calculateTotal() > heroMoney || purchasing}
-                        className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {purchasing ? (
-                          <div className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                            Purchasing...
-                          </div>
-                        ) : (
-                          'Purchase'
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <ShoppingCart
+              items={selectedItems.map(({ item, quantity }) => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: 'isConsumable' in item ? quantity : undefined,
+              }))}
+              onRemove={handleRemoveFromCart}
+              onQuantityChange={handleQuantityChange}
+              onPurchase={handlePurchase}
+              heroMoney={heroMoney}
+              purchasing={purchasing}
+            />
           </div>
         </div>
       </div>

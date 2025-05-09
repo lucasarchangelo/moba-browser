@@ -158,7 +158,7 @@ export default function HeroProfile() {
 
         if (response.ok) {
           const data = await response.json();
-          setHero(data);
+          setHero(data.hero);
         } else if (response.status === 404) {
           setHero(null);
           setError('No active hero found for the current season');

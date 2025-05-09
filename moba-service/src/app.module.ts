@@ -18,6 +18,7 @@ import { SeasonsModule } from './seasons/seasons.module';
 import { HeroesModule } from './heroes/heroes.module';
 import { StoreModule } from './store/store.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { HeroSkillsModule } from './hero-skills/hero-skills.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { InventoryModule } from './inventory/inventory.module';
     SeasonsModule,
     StoreModule,
     InventoryModule,
+    HeroSkillsModule,
   ],
   providers: [
     {

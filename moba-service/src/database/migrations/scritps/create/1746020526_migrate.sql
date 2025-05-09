@@ -103,12 +103,7 @@ CREATE TABLE IF NOT EXISTS hero_skills (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hero_id UUID REFERENCES heroes(id),
   skill_id UUID REFERENCES skills(id),
-  level INTEGER DEFAULT 0,
-  damage_multiplier INTEGER DEFAULT 0,
-  cooldown_multiplier INTEGER DEFAULT 0,
-  manaCost_multiplier INTEGER DEFAULT 0,
-  range_multiplier INTEGER DEFAULT 0,
-  area_of_effect_multiplier INTEGER DEFAULT 0,
+  level INTEGER DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
