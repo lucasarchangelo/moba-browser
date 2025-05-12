@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { HeroSkill } from './hero-skill.entity';
 import { MagicType } from '../enums/magic-type.enum';
+import { Effect } from '../interfaces/effect.interface';
 
 @Entity('skills')
 export class Skill {
@@ -42,8 +43,8 @@ export class Skill {
   @Column({ name: 'image_url' })
   imageUrl: string;
 
-  @Column('jsonb', { name: 'effects', default: {} })
-  effects: Record<string, any>;
+  @Column('jsonb', { name: 'effects', default: [] })
+  effects: Effect[];
 
   @OneToMany(() => HeroSkill, heroSkill => heroSkill.skill)
   heroSkills: HeroSkill[];

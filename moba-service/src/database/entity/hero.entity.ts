@@ -38,6 +38,9 @@ export class Hero {
   @Column({ name: 'money', default: 100 })
   money: number;
 
+  @Column({ default: 0 })
+  experience: number;
+
   @ManyToOne(() => User, user => user.heroes)
   @JoinColumn({ name: 'user_id' })
   user: User;

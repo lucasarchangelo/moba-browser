@@ -138,4 +138,78 @@ VALUES
 ('Platinum Health Amulet', 'A platinum amulet that increases health.', 60, 0, 0, 0, 0, 0, 0, false, 'ACCESSORY', 1000, 'platinum_health_amulet.png', '{}'),
 ('Platinum Mana Ring', 'A platinum ring that increases mana.', 0, 60, 0, 0, 0, 0, 0, false, 'ACCESSORY', 1000, 'platinum_mana_ring.png', '{}'),
 ('Platinum Magic Bracelet', 'A platinum bracelet that increases magic resistance.', 0, 0, 0, 6, 0, 0, 0, false, 'ACCESSORY', 1000, 'platinum_magic_bracelet.png', '{}'),
-('Platinum Accuracy Pendant', 'A platinum pendant that increases accuracy.', 0, 0, 0, 0, 6, 0, 0, false, 'ACCESSORY', 1000, 'platinum_accuracy_pendant.png', '{}');
+('Platinum Accuracy Pendant', 'A platinum pendant that increases accuracy.', 0, 0, 0, 0, 6, 0, 0, false, 'ACCESSORY', 1000, 'platinum_accuracy_pendant.png', '{}'),
+
+-- Consumable Items
+-- Health Potions
+INSERT INTO items (name, description, is_consumable, slot_type, price, image_url, effects)
+VALUES
+-- Health Potions
+('Small Health Potion', 'Restores a small amount of health.', true, 'CONSUMABLE', 50, 'small_health_potion.png', 
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 25, "stat": "HEALTH"}]'),
+('Medium Health Potion', 'Restores a moderate amount of health.', true, 'CONSUMABLE', 100, 'medium_health_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 50, "stat": "HEALTH"}]'),
+('Large Health Potion', 'Restores a large amount of health.', true, 'CONSUMABLE', 200, 'large_health_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 100, "stat": "HEALTH"}]'),
+('Greater Health Potion', 'Restores a massive amount of health.', true, 'CONSUMABLE', 400, 'greater_health_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 200, "stat": "HEALTH"}]'),
+
+-- Mana Potions
+('Small Mana Potion', 'Restores a small amount of mana.', true, 'CONSUMABLE', 50, 'small_mana_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 25, "stat": "MANA"}]'),
+('Medium Mana Potion', 'Restores a moderate amount of mana.', true, 'CONSUMABLE', 100, 'medium_mana_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 50, "stat": "MANA"}]'),
+('Large Mana Potion', 'Restores a large amount of mana.', true, 'CONSUMABLE', 200, 'large_mana_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 100, "stat": "MANA"}]'),
+('Greater Mana Potion', 'Restores a massive amount of mana.', true, 'CONSUMABLE', 400, 'greater_mana_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 200, "stat": "MANA"}]'),
+
+-- Damage Potions
+('Small Damage Potion', 'Temporarily increases physical damage.', true, 'CONSUMABLE', 75, 'small_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 5, "stat": "DAMAGE", "duration": 3}]'),
+('Medium Damage Potion', 'Temporarily increases physical damage significantly.', true, 'CONSUMABLE', 150, 'medium_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 10, "stat": "DAMAGE", "duration": 3}]'),
+('Large Damage Potion', 'Temporarily increases physical damage greatly.', true, 'CONSUMABLE', 300, 'large_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 20, "stat": "DAMAGE", "duration": 3}]'),
+('Greater Damage Potion', 'Temporarily increases physical damage massively.', true, 'CONSUMABLE', 600, 'greater_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 40, "stat": "DAMAGE", "duration": 3}]'),
+
+-- Magic Damage Potions
+('Small Magic Damage Potion', 'Temporarily increases magic damage.', true, 'CONSUMABLE', 75, 'small_magic_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 5, "stat": "MAGIC_DAMAGE", "duration": 3}]'),
+('Medium Magic Damage Potion', 'Temporarily increases magic damage significantly.', true, 'CONSUMABLE', 150, 'medium_magic_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 10, "stat": "MAGIC_DAMAGE", "duration": 3}]'),
+('Large Magic Damage Potion', 'Temporarily increases magic damage greatly.', true, 'CONSUMABLE', 300, 'large_magic_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 20, "stat": "MAGIC_DAMAGE", "duration": 3}]'),
+('Greater Magic Damage Potion', 'Temporarily increases magic damage massively.', true, 'CONSUMABLE', 600, 'greater_magic_damage_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 40, "stat": "MAGIC_DAMAGE", "duration": 3}]'),
+
+-- Accuracy Potions
+('Small Accuracy Potion', 'Temporarily increases accuracy.', true, 'CONSUMABLE', 75, 'small_accuracy_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 2, "stat": "ACCURACY", "duration": 3}]'),
+('Medium Accuracy Potion', 'Temporarily increases accuracy significantly.', true, 'CONSUMABLE', 150, 'medium_accuracy_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 4, "stat": "ACCURACY", "duration": 3}]'),
+('Large Accuracy Potion', 'Temporarily increases accuracy greatly.', true, 'CONSUMABLE', 300, 'large_accuracy_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 8, "stat": "ACCURACY", "duration": 3}]'),
+('Greater Accuracy Potion', 'Temporarily increases accuracy massively.', true, 'CONSUMABLE', 600, 'greater_accuracy_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 16, "stat": "ACCURACY", "duration": 3}]'),
+
+-- Magic Resistance Potions
+('Small Magic Resistance Potion', 'Temporarily increases magic resistance.', true, 'CONSUMABLE', 75, 'small_magic_resistance_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 2, "stat": "MAGIC_RESISTANCE", "duration": 3}]'),
+('Medium Magic Resistance Potion', 'Temporarily increases magic resistance significantly.', true, 'CONSUMABLE', 150, 'medium_magic_resistance_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 4, "stat": "MAGIC_RESISTANCE", "duration": 3}]'),
+('Large Magic Resistance Potion', 'Temporarily increases magic resistance greatly.', true, 'CONSUMABLE', 300, 'large_magic_resistance_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 8, "stat": "MAGIC_RESISTANCE", "duration": 3}]'),
+('Greater Magic Resistance Potion', 'Temporarily increases magic resistance massively.', true, 'CONSUMABLE', 600, 'greater_magic_resistance_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 16, "stat": "MAGIC_RESISTANCE", "duration": 3}]'),
+
+-- Armor Potions
+('Small Armor Potion', 'Temporarily increases armor.', true, 'CONSUMABLE', 75, 'small_armor_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 2, "stat": "ARMOR", "duration": 3}]'),
+('Medium Armor Potion', 'Temporarily increases armor significantly.', true, 'CONSUMABLE', 150, 'medium_armor_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 4, "stat": "ARMOR", "duration": 3}]'),
+('Large Armor Potion', 'Temporarily increases armor greatly.', true, 'CONSUMABLE', 300, 'large_armor_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 8, "stat": "ARMOR", "duration": 3}]'),
+('Greater Armor Potion', 'Temporarily increases armor massively.', true, 'CONSUMABLE', 600, 'greater_armor_potion.png',
+'[{"type": "STAT_CHANGE", "target": "SELF", "value": 16, "stat": "ARMOR", "duration": 3}]');

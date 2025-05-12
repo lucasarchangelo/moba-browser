@@ -20,6 +20,10 @@ export class HeroesService {
     private readonly seasonsService: SeasonsService,
   ) {}
 
+  private readonly MAX_LEVEL = 20;
+  private readonly BASE_XP = 100;
+  private readonly XP_SCALING_FACTOR = 1.5;
+
   private calculateBaseHealth(level: number, strength: number): number {
     return (10 * level) + Math.floor(strength / 5);
   }
@@ -65,12 +69,48 @@ export class HeroesService {
     };
   }
 
+  private getRequiredExperience(level: number): number {
+    return Math.floor(this.BASE_XP * Math.pow(level, this.XP_SCALING_FACTOR));
+  }
+
+  private getTotalExperienceForLevel(level: number): number {
+    let totalXP = 0;
+    for (let i = 1; i < level; i++) {
+      totalXP += this.getRequiredExperience(i);
+    }
+    return totalXP;
+  }
+
+  private async checkAndProcessLevelUp(hero: Hero): Promise<Hero> {
+    if (hero.level >= this.MAX_LEVEL) {
+      return hero;
+    }
+
+    const requiredXP = this.getRequiredExperience(hero.level);
+    if (hero.experience >= requiredXP) {
+      // Level up
+      hero.level += 1;
+      hero.experience -= requiredXP;
+      
+      // Recalculate stats after level up
+      const derivedStats = this.calculateDerivedStats(hero);
+      hero.currentLife = derivedStats.baseHealth;
+      hero.currentMana = derivedStats.baseMana;
+
+      // Save the updated hero
+      return this.heroRepository.save(hero);
+    }
+
+    return hero;
+  }
+
   async create(createHeroDto: CreateHeroDto, userId: string, seasonId: string): Promise<HeroResponseDto> {
     // Create hero with default values
     const hero = this.heroRepository.create({
       name: createHeroDto.name,
       description: createHeroDto.description || '',
       level: 1,
+      experience: 0,
       strength: 0,
       dexterity: 0,
       intelligence: 0,
@@ -170,14 +210,39 @@ export class HeroesService {
     return this.mapToResponseDto(savedHero);
   }
 
+  async addExperience(heroId: string, amount: number, userId: string): Promise<HeroResponseDto> {
+    const hero = await this.heroRepository.findOne({ where: { id: heroId } });
+    if (!hero) {
+      throw new NotFoundException(`Hero with ID ${heroId} not found`);
+    }
+
+    // Check if user is the owner of the hero
+    if (hero.userId !== userId) {
+      throw new ForbiddenException('You can only add experience to your own heroes');
+    }
+
+    // Add experience
+    hero.experience += amount;
+
+    // Check for level up
+    const updatedHero = await this.checkAndProcessLevelUp(hero);
+    return this.mapToResponseDto(updatedHero);
+  }
+
   private mapToResponseDto(hero: Hero): HeroResponseDto {
     const derivedStats = this.calculateDerivedStats(hero);
+    const requiredXP = this.getRequiredExperience(hero.level);
     
     return {
       id: hero.id,
       name: hero.name,
       description: hero.description,
       level: hero.level,
+      experience: {
+        current: hero.experience,
+        required: requiredXP,
+        total: this.getTotalExperienceForLevel(hero.level) + hero.experience
+      },
       attributes: {
         strength: hero.strength,
         dexterity: hero.dexterity,

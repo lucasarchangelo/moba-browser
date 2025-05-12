@@ -68,4 +68,10 @@ export class HeroResponseDto {
 
   @ApiProperty({ description: 'Hero last update timestamp' })
   updatedAt: Date;
+
+  experience: {
+    current: number;
+    required: number;
+    total: number;
+  };
 } 
