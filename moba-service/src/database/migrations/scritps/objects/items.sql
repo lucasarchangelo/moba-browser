@@ -138,7 +138,7 @@ VALUES
 ('Platinum Health Amulet', 'A platinum amulet that increases health.', 60, 0, 0, 0, 0, 0, 0, false, 'ACCESSORY', 1000, 'platinum_health_amulet.png', '{}'),
 ('Platinum Mana Ring', 'A platinum ring that increases mana.', 0, 60, 0, 0, 0, 0, 0, false, 'ACCESSORY', 1000, 'platinum_mana_ring.png', '{}'),
 ('Platinum Magic Bracelet', 'A platinum bracelet that increases magic resistance.', 0, 0, 0, 6, 0, 0, 0, false, 'ACCESSORY', 1000, 'platinum_magic_bracelet.png', '{}'),
-('Platinum Accuracy Pendant', 'A platinum pendant that increases accuracy.', 0, 0, 0, 0, 6, 0, 0, false, 'ACCESSORY', 1000, 'platinum_accuracy_pendant.png', '{}'),
+('Platinum Accuracy Pendant', 'A platinum pendant that increases accuracy.', 0, 0, 0, 0, 6, 0, 0, false, 'ACCESSORY', 1000, 'platinum_accuracy_pendant.png', '{}');
 
 -- Consumable Items
 -- Health Potions

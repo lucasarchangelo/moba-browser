@@ -1,6 +1,33 @@
-import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsUrl, Min, IsObject } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsUrl, Min, IsObject, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ItemSlotType } from 'src/database/enums/item-slot-type.enum';
+import { EffectType } from 'src/database/enums/effects/effect-type.enum';
+import { StatType } from 'src/database/enums/effects/effec-stat-type.enum';
+import { EffectTarget } from 'src/database/enums/effects/effect-target.enum';
+import { Type } from 'class-transformer';
+
+class EffectDto {
+  @ApiProperty({ enum: EffectType, description: 'Type of effect' })
+  @IsEnum(EffectType)
+  type: EffectType;
+
+  @ApiProperty({ enum: EffectTarget, description: 'Target of the effect' })
+  @IsEnum(EffectTarget)
+  target: EffectTarget;
+
+  @ApiProperty({ enum: StatType, description: 'Stat affected by the effect' })
+  @IsEnum(StatType)
+  stat: StatType;
+
+  @ApiProperty({ description: 'Value of the effect' })
+  @IsNumber()
+  value: number;
+
+  @ApiProperty({ description: 'Duration of the effect in seconds (0 for permanent)', required: false })
+  @IsNumber()
+  @IsOptional()
+  duration?: number;
+}
 
 export class UpdateItemDto {
   @ApiProperty({ description: 'Item name' })
@@ -72,11 +99,10 @@ export class UpdateItemDto {
   @IsOptional()
   imageUrl?: string;
 
-  @ApiProperty({ 
-    description: 'Item effects', 
-    type: 'object',
-    additionalProperties: true
-  })
+  @ApiProperty({ type: [EffectDto], description: 'Effects of the item', required: false })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EffectDto)
   @IsOptional()
-  effects?: Record<string, any>;
+  effects?: EffectDto[];
 } 

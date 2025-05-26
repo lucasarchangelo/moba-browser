@@ -22,28 +22,28 @@ export class Skill {
   })
   magicType: MagicType;
 
-  @Column({ name: 'base_damage', default: 0 })
+  @Column({ name: 'base_damage', type: 'int', default: 0 })
   baseDamage: number;
 
-  @Column({ name: 'base_mana_cost', default: 0 })
+  @Column({ name: 'base_mana_cost', type: 'int', default: 0 })
   baseManaCost: number;
 
-  @Column({ name: 'required_strength', default: 0 })
+  @Column({ name: 'required_strength', type: 'int', default: 0 })
   requiredStrength: number;
 
-  @Column({ name: 'required_dexterity', default: 0 })
+  @Column({ name: 'required_dexterity', type: 'int', default: 0 })
   requiredDexterity: number;
 
-  @Column({ name: 'required_intelligence', default: 0 })
+  @Column({ name: 'required_intelligence', type: 'int', default: 0 })
   requiredIntelligence: number;
 
-  @Column({ name: 'price', default: 0 })
+  @Column({ name: 'price', type: 'int', default: 0 })
   price: number;
 
   @Column({ name: 'image_url' })
   imageUrl: string;
 
-  @Column('jsonb', { name: 'effects', default: [] })
+  @Column({ name: 'effects', type: 'jsonb', nullable: true })
   effects: Effect[];
 
   @OneToMany(() => HeroSkill, heroSkill => heroSkill.skill)

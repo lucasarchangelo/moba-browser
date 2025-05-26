@@ -4,6 +4,7 @@ import { Inventory } from './inventory.entity';
 import { EquippedItem } from './equipped-item.entity';
 import { User } from './user.entity';
 import { Season } from './season.entity';
+import { HeroStatus } from '../enums/hero-status.enum';
 
 @Entity('heroes')
 @Unique(['userId', 'seasonId'])
@@ -28,11 +29,11 @@ export class Hero {
 
   @Column({ default: 0 })
   intelligence: number;
-
-  @Column({ name: 'current_life', default: 0 })
+  
+  @Column({ name: 'current_life', default: 100 })
   currentLife: number;
 
-  @Column({ name: 'current_mana', default: 0 })
+  @Column({ name: 'current_mana', default: 100 })
   currentMana: number;
 
   @Column({ name: 'money', default: 100 })
@@ -69,4 +70,14 @@ export class Hero {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({
+    type: 'enum',
+    enum: HeroStatus,
+    default: HeroStatus.FOUNTAIN
+  })
+  status: HeroStatus;
+
+  @Column({ name: 'last_update', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  lastUpdate: Date;
 } 

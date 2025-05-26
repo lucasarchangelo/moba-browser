@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -8,69 +8,88 @@ import { SkillResponseDto } from './dto/skill-response.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { SkillFilterDto } from './dto/skill-filter.dto';
+import { ILogger } from '../core/logger/logger.interface';
+import { EffectDto } from 'src/items/dto/item-response.dto';
 
 @Injectable()
 export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillRepository: Repository<Skill>,
+    @Inject(ILogger) private readonly logger: ILogger,
   ) {}
 
-  async create(createSkillDto: CreateSkillDto): Promise<Skill> {
+  async create(createSkillDto: CreateSkillDto): Promise<SkillResponseDto> {
     const skill = this.skillRepository.create({
       ...createSkillDto,
-      effects: createSkillDto.effects || {},
+      effects: createSkillDto.effects || []
     });
-    return this.skillRepository.save(skill);
+    const savedSkill = await this.skillRepository.save(skill);
+    return this.mapToResponseDto(savedSkill);
   }
 
-  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Skill>> {
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponseDto<SkillResponseDto>> {
     const { page = 1, limit = 10 } = paginationDto;
-    const skip = (page - 1) * limit;
-
     const [skills, total] = await this.skillRepository.findAndCount({
-      skip,
+      skip: (page - 1) * limit,
       take: limit,
     });
 
-    return new PaginatedResponseDto(skills, total, page, limit);
+    return {
+      data: skills.map(skill => this.mapToResponseDto(skill)),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    };
   }
 
-  async findOne(id: string): Promise<Skill> {
+  async findOne(id: string): Promise<SkillResponseDto> {
     const skill = await this.skillRepository.findOne({ where: { id } });
     if (!skill) {
       throw new NotFoundException(`Skill with ID ${id} not found`);
     }
-    return skill;
+    return this.mapToResponseDto(skill);
   }
 
-  async update(id: string, updateSkillDto: UpdateSkillDto): Promise<Skill> {
-    const skill = await this.findOne(id);
-    
-    const updateData = {
-      ...(updateSkillDto.name && { name: updateSkillDto.name }),
-      ...(updateSkillDto.description && { description: updateSkillDto.description }),
-      ...(updateSkillDto.magicType && { magicType: updateSkillDto.magicType }),
-      ...(updateSkillDto.baseDamage !== undefined && { baseDamage: updateSkillDto.baseDamage }),
-      ...(updateSkillDto.baseManaCost !== undefined && { baseManaCost: updateSkillDto.baseManaCost }),
-      ...(updateSkillDto.requiredStrength !== undefined && { requiredStrength: updateSkillDto.requiredStrength }),
-      ...(updateSkillDto.requiredDexterity !== undefined && { requiredDexterity: updateSkillDto.requiredDexterity }),
-      ...(updateSkillDto.requiredIntelligence !== undefined && { requiredIntelligence: updateSkillDto.requiredIntelligence }),
-      ...(updateSkillDto.price !== undefined && { price: updateSkillDto.price }),
-      ...(updateSkillDto.imageUrl && { imageUrl: updateSkillDto.imageUrl }),
-      ...(updateSkillDto.effects && { effects: updateSkillDto.effects }),
-    };
-    
-    Object.assign(skill, updateData);
-    return this.skillRepository.save(skill);
+  async update(id: string, updateSkillDto: UpdateSkillDto): Promise<SkillResponseDto> {
+    const skill = await this.skillRepository.findOne({ where: { id } });
+    if (!skill) {
+      throw new NotFoundException(`Skill with ID ${id} not found`);
+    }
+
+    const updatedSkill = await this.skillRepository.save({
+      ...skill,
+      ...updateSkillDto,
+      effects: updateSkillDto.effects || skill.effects
+    });
+
+    return this.mapToResponseDto(updatedSkill);
   }
 
-  async remove(id: string): Promise<Skill> {
-    const skill = await this.findOne(id);
-    return this.skillRepository.remove(skill);
+  async remove(id: string): Promise<void> {
+    const result = await this.skillRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Skill with ID ${id} not found`);
+    }
   }
 
   private mapToResponseDto(skill: Skill): SkillResponseDto {
+    let effects: EffectDto[] = [];
+
+    if (skill.effects && Object.keys(skill.effects).length > 0) {
+      effects = skill.effects?.map(effect => ({
+        type: effect.type,
+        target: effect.target,
+        stat: effect.stat,
+        value: typeof effect.value === 'string' ? parseFloat(effect.value) : effect.value,
+        duration: effect.duration,
+        chance: effect.chance
+      })) || []
+    }
+    
     return {
       id: skill.id,
       name: skill.name,
@@ -83,9 +102,9 @@ export class SkillsService {
       requiredIntelligence: skill.requiredIntelligence,
       price: skill.price,
       imageUrl: skill.imageUrl,
-      effects: skill.effects,
+      effects: effects,
       createdAt: skill.createdAt,
-      updatedAt: skill.updatedAt,
+      updatedAt: skill.updatedAt
     };
   }
 

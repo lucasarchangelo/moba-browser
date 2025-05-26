@@ -3,7 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faEdit, faCode } from '@fortawesome/free-solid-svg-icons';
+import { EffectType } from '@/types/effect-type.enum';
+import { EffectTarget } from '@/types/effect-target.enum';
+import { StatType } from '@/types/stat-type.enum';
+
+interface EffectEntry {
+  type: EffectType;
+  target: EffectTarget;
+  value: number | string;
+  stat?: StatType;
+  duration?: number;
+  chance?: number;
+}
+
+interface Effect {
+  effect: EffectEntry[];
+}
 
 interface Skill {
   id: string;
@@ -17,7 +33,7 @@ interface Skill {
   requiredIntelligence: number;
   price: number;
   imageUrl: string;
-  effects: Record<string, any>;
+  effects: Effect;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,7 +49,7 @@ interface SkillFormData {
   requiredIntelligence: number;
   price: number;
   imageUrl: string;
-  effects: Record<string, any>;
+  effects: Effect;
 }
 
 interface PaginatedResponse<T> {
@@ -44,6 +60,233 @@ interface PaginatedResponse<T> {
     limit: number;
     totalPages: number;
   };
+}
+
+function EffectEditor({ value, onChange }: { value: Effect; onChange: (value: Effect) => void }) {
+  const [isJsonMode, setIsJsonMode] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonValue, setJsonValue] = useState('');
+
+  useEffect(() => {
+    if (isJsonMode) {
+      setJsonValue(JSON.stringify(value, null, 2));
+    }
+  }, [isJsonMode, value]);
+
+  const handleJsonChange = (newJson: string) => {
+    setJsonValue(newJson);
+    try {
+      const parsed = JSON.parse(newJson);
+      // Validate the structure
+      if (!parsed.effect || !Array.isArray(parsed.effect)) {
+        throw new Error('Effects must be an array under the "effect" key');
+      }
+      
+      // Validate each effect entry
+      parsed.effect.forEach((entry: any, index: number) => {
+        if (!entry.type || !entry.target || entry.value === undefined) {
+          throw new Error(`Effect at index ${index} is missing required fields (type, target, value)`);
+        }
+        if (entry.type && !Object.values(EffectType).includes(entry.type)) {
+          throw new Error(`Invalid effect type at index ${index}`);
+        }
+        if (entry.target && !Object.values(EffectTarget).includes(entry.target)) {
+          throw new Error(`Invalid effect target at index ${index}`);
+        }
+        if (entry.stat && !Object.values(StatType).includes(entry.stat)) {
+          throw new Error(`Invalid stat type at index ${index}`);
+        }
+      });
+
+      onChange(parsed);
+      setJsonError(null);
+    } catch (err) {
+      setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
+    }
+  };
+
+  const addEffect = () => {
+    const newEffect: Effect = {
+      effect: [
+        ...(value.effect || []),
+        {
+          type: EffectType.STAT_CHANGE,
+          target: EffectTarget.SELF,
+          value: 0,
+          stat: StatType.HEALTH,
+          duration: 0,
+          chance: 100
+        }
+      ]
+    };
+    onChange(newEffect);
+  };
+
+  const removeEffect = (index: number) => {
+    const newEffect: Effect = {
+      effect: value.effect.filter((_, i) => i !== index)
+    };
+    onChange(newEffect);
+  };
+
+  const updateEffect = (index: number, field: keyof EffectEntry, newValue: any) => {
+    const newEffect: Effect = {
+      effect: value.effect.map((effect, i) => 
+        i === index ? { ...effect, [field]: newValue } : effect
+      )
+    };
+    onChange(newEffect);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-medium text-white">Effects</h4>
+        <div className="space-x-2">
+          <button
+            type="button"
+            onClick={() => setIsJsonMode(!isJsonMode)}
+            className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+          >
+            <FontAwesomeIcon icon={faCode} />
+            {isJsonMode ? 'Visual Editor' : 'JSON Editor'}
+          </button>
+          {!isJsonMode && (
+            <button
+              type="button"
+              onClick={addEffect}
+              className="text-green-400 hover:text-green-300 flex items-center gap-1"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+              Add Effect
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isJsonMode ? (
+        <div className="space-y-2">
+          <textarea
+            value={jsonValue}
+            onChange={(e) => handleJsonChange(e.target.value)}
+            className="w-full h-64 font-mono text-sm bg-gray-700 text-white rounded-md p-4"
+            placeholder='{
+  "effect": [
+    {
+      "type": "HEALING",
+      "target": "SELF",
+      "value": 100,
+      "stat": "HEALTH",
+      "duration": 10,
+      "chance": 100
+    }
+  ]
+}'
+          />
+          {jsonError && (
+            <div className="text-red-400 text-sm">{jsonError}</div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {value.effect.map((effect, index) => (
+            <div key={index} className="bg-gray-700 p-4 rounded-md space-y-4">
+              <div className="flex justify-between items-center">
+                <h5 className="text-white font-medium">Effect {index + 1}</h5>
+                <button
+                  type="button"
+                  onClick={() => removeEffect(index)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Type
+                  </label>
+                  <select
+                    value={effect.type}
+                    onChange={(e) => updateEffect(index, 'type', e.target.value)}
+                    className="w-full bg-gray-600 text-white rounded-md p-2"
+                  >
+                    {Object.values(EffectType).map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Target
+                  </label>
+                  <select
+                    value={effect.target}
+                    onChange={(e) => updateEffect(index, 'target', e.target.value)}
+                    className="w-full bg-gray-600 text-white rounded-md p-2"
+                  >
+                    {Object.values(EffectTarget).map((target) => (
+                      <option key={target} value={target}>{target}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Value
+                  </label>
+                  <input
+                    type="number"
+                    value={effect.value}
+                    onChange={(e) => updateEffect(index, 'value', Number(e.target.value))}
+                    className="w-full bg-gray-600 text-white rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Stat
+                  </label>
+                  <select
+                    value={effect.stat || ''}
+                    onChange={(e) => updateEffect(index, 'stat', e.target.value || undefined)}
+                    className="w-full bg-gray-600 text-white rounded-md p-2"
+                  >
+                    <option value="">None</option>
+                    {Object.values(StatType).map((stat) => (
+                      <option key={stat} value={stat}>{stat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Duration (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    value={effect.duration || 0}
+                    onChange={(e) => updateEffect(index, 'duration', Number(e.target.value))}
+                    className="w-full bg-gray-600 text-white rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Chance (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={effect.chance || 100}
+                    onChange={(e) => updateEffect(index, 'chance', Number(e.target.value))}
+                    min="0"
+                    max="100"
+                    className="w-full bg-gray-600 text-white rounded-md p-2"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function SkillsSection() {
@@ -68,7 +311,7 @@ export default function SkillsSection() {
     requiredIntelligence: 0,
     price: 0,
     imageUrl: '',
-    effects: {},
+    effects: { effect: [] },
   });
 
   useEffect(() => {
@@ -120,13 +363,19 @@ export default function SkillsSection() {
         : 'http://localhost:3000/skills';
       const method = editingSkill ? 'PATCH' : 'POST';
 
+      // Send the effects array directly
+      const submitData = {
+        ...formData,
+        effects: formData.effects.effect,
+      };
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       if (response.ok) {
@@ -185,7 +434,7 @@ export default function SkillsSection() {
       requiredIntelligence: skill.requiredIntelligence,
       price: skill.price,
       imageUrl: skill.imageUrl,
-      effects: skill.effects,
+      effects: { effect: Array.isArray(skill.effects) ? skill.effects : [] },
     });
     setIsModalOpen(true);
   };
@@ -202,7 +451,7 @@ export default function SkillsSection() {
       requiredIntelligence: 0,
       price: 0,
       imageUrl: '',
-      effects: {},
+      effects: { effect: [] },
     });
   };
 
@@ -329,6 +578,13 @@ export default function SkillsSection() {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            First
+          </button>
+          <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
@@ -344,6 +600,13 @@ export default function SkillsSection() {
             className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Last
           </button>
         </div>
       </div>
@@ -505,6 +768,13 @@ export default function SkillsSection() {
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-base"
                   />
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <EffectEditor
+                  value={formData.effects}
+                  onChange={(newEffects) => setFormData(prev => ({ ...prev, effects: newEffects }))}
+                />
               </div>
 
               <div className="flex justify-end space-x-4 mt-8">

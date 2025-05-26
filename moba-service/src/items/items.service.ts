@@ -4,11 +4,12 @@ import { Repository } from 'typeorm';
 import { Item } from '../database/entity/item.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
-import { ItemResponseDto } from './dto/item-response.dto';
+import { ItemResponseDto, EffectDto } from './dto/item-response.dto';
 import { ILogger } from '../core/logger/logger.interface';
 import { Inject } from '@nestjs/common';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+
 
 @Injectable()
 export class ItemsService {
@@ -23,10 +24,12 @@ export class ItemsService {
   async create(createItemDto: CreateItemDto): Promise<ItemResponseDto> {
     this.logger.debug(`Creating new item with name: ${createItemDto.name}`, this.serviceName);
     
-    const item = this.itemRepository.create({
+    const item = new Item();
+    Object.assign(item, {
       ...createItemDto,
-      effects: createItemDto.effects || {},
+      effects: createItemDto.effects || { effect: [] },
     });
+    
     const savedItem = await this.itemRepository.save(item);
     
     this.logger.info(`Item created successfully with ID: ${savedItem.id}`, this.serviceName);
@@ -68,7 +71,11 @@ export class ItemsService {
   async update(id: string, updateItemDto: UpdateItemDto): Promise<ItemResponseDto> {
     this.logger.debug(`Updating item with ID: ${id}`, this.serviceName);
     
-    const item = await this.findOne(id);
+    const item = await this.itemRepository.findOne({ where: { id } });
+    if (!item) {
+      this.logger.warn(`Item not found with ID: ${id}`, this.serviceName);
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
     
     const updateData = {
       ...(updateItemDto.name && { name: updateItemDto.name }),
@@ -97,7 +104,12 @@ export class ItemsService {
   async remove(id: string): Promise<ItemResponseDto> {
     this.logger.debug(`Attempting to remove item with ID: ${id}`, this.serviceName);
     
-    const item = await this.findOne(id);
+    const item = await this.itemRepository.findOne({ where: { id } });
+    if (!item) {
+      this.logger.warn(`Item not found with ID: ${id}`, this.serviceName);
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+    
     const result = await this.itemRepository.remove(item);
     
     this.logger.info(`Item removed successfully with ID: ${id}`, this.serviceName);
@@ -105,6 +117,19 @@ export class ItemsService {
   }
 
   private mapToResponseDto(item: Item): ItemResponseDto {
+    let effects: EffectDto[] = [];
+
+    if (item.effects && Object.keys(item.effects).length > 0) {
+      effects = item.effects?.map(effect => ({
+        type: effect.type,
+        target: effect.target,
+        stat: effect.stat,
+        value: typeof effect.value === 'string' ? parseFloat(effect.value) : effect.value,
+        duration: effect.duration,
+        chance: effect.chance
+      }));
+    }
+
     return {
       id: item.id,
       name: item.name,
@@ -120,9 +145,9 @@ export class ItemsService {
       slotType: item.slotType,
       price: item.price,
       imageUrl: item.imageUrl,
-      effects: item.effects,
+      effects: effects,
       createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
+      updatedAt: item.updatedAt,  
     };
   }
 } 

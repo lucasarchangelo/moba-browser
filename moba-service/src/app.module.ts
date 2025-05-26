@@ -19,11 +19,15 @@ import { HeroesModule } from './heroes/heroes.module';
 import { StoreModule } from './store/store.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { HeroSkillsModule } from './hero-skills/hero-skills.module';
+import { EquippedItemsModule } from './equipped-items/equipped-items.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
+    ConfigModule.forRoot(),
+    TypeOrmModule.forRoot({
+      // ... your database config ...
     }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -46,6 +50,8 @@ import { HeroSkillsModule } from './hero-skills/hero-skills.module';
     StoreModule,
     InventoryModule,
     HeroSkillsModule,
+    EquippedItemsModule,
+    CronModule,
   ],
   providers: [
     {

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Inventory } from '../database/entity/inventory.entity';
 import { InventoryResponseDto, InventoryItemResponseDto } from './dto/inventory-response.dto';
 import { HeroesService } from '../heroes/heroes.service';
+import { EffectDto } from 'src/items/dto/item-response.dto';
 
 @Injectable()
 export class InventoryService {
@@ -44,7 +45,14 @@ export class InventoryService {
         slotType: inv.item.slotType,
         price: inv.item.price,
         imageUrl: inv.item.imageUrl,
-        effects: inv.item.effects,
+        effects: inv.item.effects?.map(effect => ({
+            type: effect.type,
+            target: effect.target,
+            stat: effect.stat,
+            value: typeof effect.value === 'string' ? parseFloat(effect.value) : effect.value,
+            duration: effect.duration,
+            chance: effect.chance
+          })) || [],
         createdAt: inv.item.createdAt,
         updatedAt: inv.item.updatedAt
       },

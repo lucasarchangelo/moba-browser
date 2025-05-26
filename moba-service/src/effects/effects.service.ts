@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Effect } from '../database/interfaces/effect.interface';
-import { EffectType } from '../database/enums/effect-type.enum';
-import { EffectTarget } from '../database/enums/effect-target.enum';
-import { StatType } from '../database/enums/stat-type.enum';
+import { EffectType } from '../database/enums/effects/effect-type.enum';
+import { EffectTarget } from '../database/enums/effects/effect-target.enum';
+import { StatType } from '../database/enums/effects/effec-stat-type.enum';
 
 @Injectable()
 export class EffectsService {
@@ -46,9 +46,6 @@ export class EffectsService {
         return source;
       case EffectTarget.OPPONENT:
         return opponent;
-      case EffectTarget.AREA:
-        // Implement area effect logic
-        return null;
       default:
         return null;
     }

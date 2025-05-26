@@ -1,0 +1,34 @@
+Social System
+    Friends list and social interactions
+    Guilds/Clans with shared benefits
+    Team battles (2v2, 3v3, 5v5)
+Progression Depth
+    Hero specialization/talent trees
+    Achievement system with rewards
+    Hero mastery levels
+    PvE content (quests, missions, dungeons)
+Engagement Features
+    Daily/weekly quests
+    Special limited-time events
+    Tournaments with prizes
+    Cosmetic items/skins for heroes
+Battle System Enhancements
+    Different battle modes (arena, capture the flag)
+    Environmental effects in battles
+    Spectator mode for popular matches
+    Battle replays
+
+Admin Features to Add:
+
+Analytics Dashboard
+    Player retention metrics
+    Battle statistics and balance data
+    Economy analytics (gold sinks/sources)
+Content Tools
+    Map/environment editor
+    Battle scenario creator
+    Event scheduling system
+Community Management
+    In-game announcements
+    Moderation tools
+    Feedback collection system

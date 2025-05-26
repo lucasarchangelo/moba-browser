@@ -43,7 +43,7 @@ export class SkillsController {
   }
 
   @Get()
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all skills with optional filtering' })
   @ApiResponse({ 
     status: 200, 
@@ -71,7 +71,7 @@ export class SkillsController {
     status: HttpStatus.NOT_FOUND, 
     description: 'Item not found.' 
   })
-  async findOne(@Param('id') id: string): Promise<Skill> {
+  async findOne(@Param('id') id: string): Promise<SkillResponseDto> {
     return this.skillsService.findOne(id);
   }
 
@@ -118,7 +118,7 @@ export class SkillsController {
     status: HttpStatus.FORBIDDEN, 
     description: 'Only administrators can delete skills.' 
   })
-  remove(@Param('id') id: string): Promise<SkillResponseDto> {
+  remove(@Param('id') id: string): Promise<void> {
     return this.skillsService.remove(id);
   }
 } 

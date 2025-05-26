@@ -1,6 +1,17 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { ItemSlotType } from '../enums/item-slot-type.enum';
-import { Effect } from '../interfaces/effect.interface';
+import { EffectType } from '../enums/effects/effect-type.enum';
+import { EffectTarget } from '../enums/effects/effect-target.enum';
+import { StatType } from '../enums/effects/effec-stat-type.enum';
+
+interface Effect {
+  type: EffectType;
+  target: EffectTarget;
+  value: number | string;
+  stat?: StatType;
+  duration?: number;
+  chance?: number;
+}
 
 @Entity('items')
 export class Item {
@@ -43,10 +54,10 @@ export class Item {
   @Column()
   price: number;
 
-  @Column({ name: 'image_url' })
-  imageUrl: string;
+  @Column({ name: 'image_url', nullable: true })
+  imageUrl?: string;
 
-  @Column('jsonb', { name: 'effects', default: [] })
+  @Column({ type: 'jsonb', nullable: true })
   effects: Effect[];
 
   @CreateDateColumn({ name: 'created_at' })

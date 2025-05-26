@@ -1,6 +1,6 @@
-import { EffectType } from '../enums/effect-type.enum';
-import { EffectTarget } from '../enums/effect-target.enum';
-import { StatType } from '../enums/stat-type.enum';
+import { EffectType } from '../enums/effects/effect-type.enum';
+import { EffectTarget } from '../enums/effects/effect-target.enum';
+import { StatType } from '../enums/effects/effec-stat-type.enum';
 
 export interface Effect {
   type: EffectType;

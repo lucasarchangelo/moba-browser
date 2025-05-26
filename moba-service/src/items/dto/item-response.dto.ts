@@ -1,14 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ItemSlotType } from '../../database/enums/item-slot-type.enum';
+import { EffectType } from '../../database/enums/effects/effect-type.enum';
+import { EffectTarget } from '../../database/enums/effects/effect-target.enum';
+import { StatType } from '../../database/enums/effects/effec-stat-type.enum';
+
+export class EffectDto {
+  @ApiProperty({ enum: EffectType, description: 'Type of effect' })
+  type: EffectType;
+
+  @ApiProperty({ enum: EffectTarget, description: 'Target of the effect' })
+  target: EffectTarget;
+
+  @ApiProperty({ enum: StatType, description: 'Stat affected by the effect', required: false })
+  stat?: StatType;
+
+  @ApiProperty({ description: 'Value of the effect' })
+  value: number;
+
+  @ApiProperty({ description: 'Duration of the effect in seconds (0 for permanent)', required: false })
+  duration?: number;
+
+  @ApiProperty({ description: 'Chance of the effect occurring (0-100)', required: false })
+  chance?: number;
+}
 
 export class ItemResponseDto {
-  @ApiProperty({ description: 'Item ID' })
+  @ApiProperty({ description: 'Unique identifier of the item' })
   id: string;
 
-  @ApiProperty({ description: 'Item name' })
+  @ApiProperty({ description: 'Name of the item' })
   name: string;
 
-  @ApiProperty({ description: 'Item description' })
+  @ApiProperty({ description: 'Description of the item' })
   description: string;
 
   @ApiProperty({ description: 'Base health bonus' })
@@ -35,25 +58,17 @@ export class ItemResponseDto {
   @ApiProperty({ description: 'Whether the item is consumable' })
   isConsumable: boolean;
 
-  @ApiProperty({ 
-    description: 'Item slot type', 
-    enum: ItemSlotType,
-    example: ItemSlotType.WEAPON
-  })
+  @ApiProperty({ enum: ItemSlotType, description: 'Slot type of the item' })
   slotType: ItemSlotType;
 
-  @ApiProperty({ description: 'Item price' })
+  @ApiProperty({ description: 'Price of the item' })
   price: number;
 
-  @ApiProperty({ description: 'Item image URL' })
-  imageUrl: string;
+  @ApiProperty({ description: 'URL of the item image', required: false })
+  imageUrl?: string;
 
-  @ApiProperty({ 
-    description: 'Item effects', 
-    type: 'object',
-    additionalProperties: true
-  })
-  effects: Record<string, any>;
+  @ApiProperty({ type: [EffectDto], description: 'Effects of the item' })
+  effects: EffectDto[];
 
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt: Date;

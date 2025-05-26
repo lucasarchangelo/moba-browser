@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Hero } from './hero.entity';
 import { Item } from './item.entity';
+import { ItemSlotType } from '../enums/item-slot-type.enum';
 
 @Entity('equipped_items')
 export class EquippedItem {
@@ -13,8 +14,11 @@ export class EquippedItem {
   @ManyToOne(() => Item)
   item: Item;
 
-  @Column()
-  slot: number;
+  @Column({
+    type: 'enum',
+    enum: ItemSlotType
+  })
+  slot: ItemSlotType;
 
   @CreateDateColumn()
   createdAt: Date;

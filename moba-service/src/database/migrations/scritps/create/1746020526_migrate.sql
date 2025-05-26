@@ -7,6 +7,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create hero status enum
+CREATE TYPE hero_status_enum AS ENUM (
+  'FOUNTAIN',
+  'SHOP',
+  'DEFENSIVE_TOWER',
+  'ATTACKING_TOWER'
+);
+
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -58,6 +66,8 @@ CREATE TABLE IF NOT EXISTS heroes (
   money INTEGER DEFAULT 100,
   user_id UUID NOT NULL REFERENCES users(id),
   season_id UUID NOT NULL REFERENCES seasons(id),
+  status hero_status_enum NOT NULL DEFAULT 'FOUNTAIN',
+  last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   -- Ensure a user can only have one hero per season
@@ -116,7 +126,7 @@ CREATE TRIGGER set_updated_at
 
 -- Create item enums
 CREATE TYPE item_rarity AS ENUM ('COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY');
-CREATE TYPE item_slot_type AS ENUM ('HEAD', 'CHEST', 'HANDS', 'LEGS', 'FEET', 'WEAPON', 'ACCESSORY');
+CREATE TYPE item_slot_type AS ENUM ('HEAD', 'CHEST', 'HANDS', 'LEGS', 'FEET', 'WEAPON', 'ACCESSORY', 'CONSUMABLE');
 
 -- Create items table
 CREATE TABLE IF NOT EXISTS items (
